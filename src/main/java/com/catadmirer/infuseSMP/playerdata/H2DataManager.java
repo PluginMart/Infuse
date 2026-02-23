@@ -46,7 +46,7 @@ public class H2DataManager implements DataManager {
     public boolean load() {
         final String createPlayerDataDb = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY, slot_1 INTEGER NOT NULL, slot_2 INTEGER NOT NULL, offhand_control BOOLEAN NOT NULL);";
         final String createTrustDb = "CREATE TABLE IF NOT EXISTS trusts(truster UUID NOT NULL, trusted UUID NOT NULL);";
-        final String createCraftedDb = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER NOT NULL, count INTEGER NOT NULL);";
+        final String createCraftedDb = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER PRIMARY KEY, count INTEGER NOT NULL);";
 
         try (Connection conn = dataSource.getConnection()) {
             // Creating the tables if they dont exist
@@ -74,7 +74,10 @@ public class H2DataManager implements DataManager {
     }
 
     @Override
-    public void setCrafted(EffectMapping effect, int crafted) {}
+    public void setCrafted(EffectMapping effect, int crafted) {
+        String mergeStr = "MERGE INTO crafted_effects (?, ?)";
+        
+    }
 
     @Override
     public @NotNull Set<OfflinePlayer> getTrusted(@NotNull OfflinePlayer truster) {
@@ -174,8 +177,31 @@ public class H2DataManager implements DataManager {
         return false;
     }
 
+    public void insertEmptyPlayerData(@NotNull UUID playerUUID) {
+        String insertElem = """
+                            INSERT INTO player_data (player, slot_1, slot_2, offhand_control)
+                            SELECT ?, 0, 0, FALSE
+                            WHERE NOT EXISTS (
+                                SELECT * FROM player_data WHERE player = ?
+                            );""";
+
+        try (Connection conn = dataSource.getConnection()) {
+            PreparedStatement stmt = conn.prepareStatement(insertElem);
+
+            stmt.close();
+        } catch(SQLException err) {
+
+        }
+    }
+
     @Override
     public void setEffect(@NotNull UUID playerUUID, @NotNull String slot, @NotNull EffectMapping effect) {
+        insertEmptyPlayerData(playerUUID);
+        
+        String updateSlot1 = "UPDATE player_data SET slot_1 = ? WHERE player = ?";
+        String updateSlot2 = "UPDATE player_data SET slot_2 = ? WHERE player = ?";
+
+        //CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY, slot_1 INTEGER NOT NULL, slot_2 INTEGER NOT NULL, offhand_control BOOLEAN NOT NULL);
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'setEffect'");
     }

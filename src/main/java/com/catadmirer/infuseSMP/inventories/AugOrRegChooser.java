@@ -1,8 +1,8 @@
 package com.catadmirer.infuseSMP.inventories;
 
-import com.catadmirer.infuseSMP.managers.EffectMapping;
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.Messages;
+import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.util.InventoryUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
@@ -12,15 +12,18 @@ import org.jetbrains.annotations.NotNull;
 public class AugOrRegChooser implements InventoryHolder {
     private final Inventory inventory;
 
-    public AugOrRegChooser(EffectMapping effect) {
-        inventory = Bukkit.createInventory(this, 27, Messages.toComponent("<yellow>Choose"));
-        
+    public AugOrRegChooser(InfuseEffect effect) {
+        inventory = Bukkit.createInventory(this, 27, Message.toComponent("<yellow>Choose"));
+
         // Filling the inventory with a filler item.
         InventoryUtils.fillInventory(inventory, InventoryUtils.createNoName(EffectConstants.menuBackgroundColor(effect.getId())));
 
         // Adding the effects to the inventory
-        inventory.setItem(11, effect.regular().createItem());
-        inventory.setItem(15, effect.augmented().createItem());
+        inventory.setItem(11, effect.getRegularVersion().createItem());
+        inventory.setItem(15, effect.getAugmentedVersion().createItem());
+
+        // Locking the inventory
+        InventoryUtils.lockInventory(inventory);
     }
 
     @Override

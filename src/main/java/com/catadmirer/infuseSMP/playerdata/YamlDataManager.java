@@ -1,249 +1,152 @@
 package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Set;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Scanner;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@NullMarked
 public class YamlDataManager implements DataManager {
-    private final Infuse plugin;
     private final File dataFile;
     private final YamlConfiguration config;
 
-    public YamlDataManager(Infuse plugin) {   
-        this.plugin = plugin;     
-        this.dataFile = new File(plugin.getDataFolder(), "data/playerdata.yml");
+    public YamlDataManager() {
+        this.dataFile = new File(Infuse.getInstance().getDataFolder(), "data/playerdata.yml");
         this.config = YamlConfiguration.loadConfiguration(dataFile);
     }
 
-    /**
-     * Reloads the player data.
-     *
-     * @return True if the data was loaded successfully, false otherwise.
-     */
     @Override
-    public boolean load() {
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot load {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
-        }
-
+    public void load() {
         // Creating the file if it doesn't exist.
         createFile();
 
         // Loading the config
         try {
             config.load(dataFile);
-            plugin.getLogger().log(Level.INFO, "Successfully loaded {0}", dataFile.getName());
-            return true;
+            Infuse.LOGGER.info("Successfully loaded YAML data!");
         } catch (InvalidConfigurationException err) {
-            plugin.getLogger().log(Level.WARNING, "{0]} contains an invalid YAML configuration.  Verify the contents of the file.", dataFile.getName());
+            Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", dataFile.getName());
         } catch (IOException err) {
-            plugin.getLogger().log(Level.SEVERE, "Could not find {0}.  Check that it exists.", dataFile.getName());
+            Infuse.LOGGER.error("Could not find {}.  Check that it exists.", dataFile.getName());
         }
 
-        return false;
     }
 
-    /**
-     * Writes the player data to disk.
-     * 
-     * @return Whether or not the data was successfully written.
-     */
-    public boolean save() {
-        // Getting a plugin instance to use
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot save the {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
-        }
-
+    private void save() {
         // Creating the file if it doesn't exist.
         createFile();
 
         // Saving the config
         try {
             config.save(dataFile);
-            plugin.getLogger().log(Level.INFO, "Saved {0}", dataFile.getName());
-            return true;
+            Infuse.LOGGER.info("Saved {}", dataFile.getName());
         } catch (IOException e) {
-            plugin.getLogger().log(Level.WARNING, "Could not save {0}.  Make sure the user has write permissions.", dataFile.getName());
+            Infuse.LOGGER.warn("Could not save {}.  Make sure the user has write permissions.", dataFile.getName());
         }
 
-        return false;
     }
 
-    /**
-     * Creating the data file. If it doesn't exist, it just makes an empty file.
-     * 
-     * @return True if the file was created successfully, false otherwise.
-     */
-    public boolean createFile() {
-        // Getting a plugin instance to use
-        if (plugin == null) {
-            Bukkit.getLogger().log(Level.SEVERE, "{0} not loaded, cannot create default {1}.", new String[]{plugin.getName(), dataFile.getName()});
-            return false;
-        }
-
-        // Creating the file if it doesn't exist.
-        if (!dataFile.exists()) {
-            try {
-                dataFile.getParentFile().mkdirs();
-                dataFile.createNewFile();
-            } catch (IOException e) {
-                plugin.getLogger().log(Level.SEVERE, "Could not create {0}.  Make sure the user has the right permissions.", dataFile.getName());
-                return false;
-            }
-        }
-
-        return true;
+    /** Creates the config file. If it doesn't exist, it loads the default config. */
+    public void createFile() {
+        Infuse.getInstance().saveResource("config.yml", false);
     }
 
     @Override
-    public int getCrafted(EffectMapping effect) {
+    public int getExistingCount(InfuseEffect effect) {
         return config.getInt("effects-crafted." + effect.getKey(), 0);
     }
 
     @Override
-    public void setCrafted(EffectMapping effect, int crafted) {
-        config.set("effects-crafted." + effect.getKey(), crafted);
+    public void setExistingCount(InfuseEffect effect, int count) {
+        config.set("effects-crafted." + effect.getKey(), count);
     }
 
-    /**
-     * Gets a list of the players that the truster trusts.
-     * 
-     * @param truster
-     * 
-     * @return The list of players trusted by the truster.
-     */
     @Override
-    @NotNull
-    public Set<OfflinePlayer> getTrusted(@NotNull OfflinePlayer truster) {
-        return config.getStringList(truster.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+    public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
+        return config.getStringList(player.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
     }
 
-    /**
-     * Sets the players that the truster trusts.
-     * 
-     * @param truster The player to modify
-     * @param trusted The list of players the truster now trusts
-     */
     @Override
-    public void setTrusted(@NotNull OfflinePlayer truster, @NotNull Set<OfflinePlayer> trusted) {
-        config.set(truster.getUniqueId() + ".trust", trusted.stream().map(OfflinePlayer::getUniqueId).toList());
+    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
+        config.set(player.getUniqueId() + ".trust", allTrusted.stream().map(OfflinePlayer::getUniqueId).toList());
 
         save();
     }
 
-    /**
-     * Checks if a player is trusted by another player.
-     * 
-     * @param truster The player whose trusted list to check.
-     * @param toCheck The player to check if truster trusts.
-     * 
-     * @return True if the truster trusts the toCheck player, false otherwise
-     */
     @Override
-    public boolean isTrusted(@NotNull OfflinePlayer caster, @NotNull OfflinePlayer trusted) {
-        if (caster == null || trusted == null) return false;
-        if (caster.getUniqueId().equals(trusted.getUniqueId())) return true;
+    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+        // Making sure slot is "1" or "2"
+        if (!slot.equals("1") && !slot.equals("2")) {
+            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
+            return;
+        }
 
-        return getTrusted(caster).contains(trusted);
-    }
-
-    /**
-     * Sets the infuse effect in a specific slot for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to equip the effect in.
-     * @param effect The {@link EffectMapping} for the infuse effect.
-     */
-    @Override
-    public void setEffect(@NotNull UUID playerUUID, @NotNull String slot, @NotNull EffectMapping effect) {
         if (effect == null) {
-            config.set(playerUUID.toString() + "." + slot, null);
+            config.set(player.getUniqueId() + "." + slot, null);
         } else {
-            config.set(playerUUID.toString() + "." + slot, effect.getKey());
+            config.set(player.getUniqueId() + "." + slot, effect.getKey());
         }
         save();
     }
 
-    /**
-     * Gets the infuse effect a player has in a specific slot.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to get the effect from.
-     * 
-     * @return null if there is not an effect equipped there or if the EffectMapping could not be deserialized.  Otherwise, it returns the deserialized EffectMapping.
-     */
-    @Override
     @Nullable
-    public EffectMapping getEffect(@NotNull UUID playerUUID, @NotNull String slot) {
-        String effectKey = config.getString(playerUUID.toString() + "." + slot, null);
-        EffectMapping effect = EffectMapping.fromEffectKey(effectKey);
+    @Override
+    public InfuseEffect getEffect(OfflinePlayer player, String slot) {
+        String effectKey = config.getString(player.getUniqueId() + "." + slot, null);
+        InfuseEffect effect = InfuseEffect.fromString(effectKey);
         if (effectKey != null && effect == null) {
-            Bukkit.getLogger().warning("No valid ability found for the equipped effect.");
+            Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
         }
 
         return effect;
     }
 
-    public boolean hasEffect(OfflinePlayer player, EffectMapping effect, boolean differentiateAugmented, String slot) {
-        EffectMapping equippedEffect = getEffect(player.getUniqueId(), slot);
-
-        if (equippedEffect == null) return false;
-
-        if (differentiateAugmented) {
-            return effect.equals(equippedEffect);
-        }
-
-        return effect.getId() == equippedEffect.getId();
-    }
-
-    /**
-     * Removes an infuse effect from a specific slot for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param slot The slot to remove an effect from.
-     */
     @Override
-    public void removeEffect(UUID playerUUID, String slot) {
-        config.set(playerUUID.toString() + "." + slot, null);
+    public void setControlMode(OfflinePlayer player, String defaultMode) {
+        config.set(player.getUniqueId() + ".controls", defaultMode);
         save();
     }
 
-    /**
-     * Sets the control mode for a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * @param defaultMode The new control mode to use.
-     */
     @Override
-    public void setControlMode(@NotNull UUID playerUUID, @NotNull String defaultMode) {
-        config.set(playerUUID.toString() + ".controls", defaultMode);
-        save();
+    public String getControlMode(OfflinePlayer player) {
+        return config.getString(player.getUniqueId() + ".controls", "command");
     }
 
-    /**
-     * Gets the control mode of a player.
-     * 
-     * @param playerUUID The UUID of the player.
-     * 
-     * @return Either "command" or "offhand".  Defaults to "offhand"
-     */
     @Override
-    @NotNull
-    public String getControlMode(@NotNull UUID playerUUID) {
-        return config.getString(playerUUID.toString() + ".controls", "offhand");
+    public void applyUpdates() {
+        try {
+            Scanner scanner = new Scanner(dataFile);
+            StringBuilder inputBuffer = new StringBuilder();
+            String line;
+
+            while (scanner.hasNextLine()) {
+                line = scanner.nextLine();
+
+                // Replacing old configs
+                if (line.startsWith("effects-crafted")) {
+                    line = line.replace("effects-crafted", "existing-effects");
+                }
+                inputBuffer.append(line);
+                inputBuffer.append('\n');
+            }
+            scanner.close();
+
+            // Emptying the string buffer back into the file
+            FileOutputStream fileOut = new FileOutputStream(dataFile);
+            fileOut.write(inputBuffer.toString().getBytes());
+            fileOut.close();
+        } catch (IOException ignored) {}
     }
 }

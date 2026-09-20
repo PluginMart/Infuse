@@ -42,8 +42,8 @@
             </filters>
             <AppenderRef ref="Async"/>
         </Root>
-        <!-- Allowing the InfuseDebug logger to log at the DEBUG level -->
-        <Logger name="InfuseDebug" level="DEBUG">
+        <!-- Allowing the Infuse logger to log at the DEBUG level -->
+        <Logger name="Infuse" level="DEBUG" additivity="false">
             <AppenderRef ref="File"/>
             <AppenderRef ref="TerminalConsole"/>
             <AppenderRef ref="ServerGuiConsole"/>

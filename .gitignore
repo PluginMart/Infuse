@@ -4,6 +4,7 @@ run/
 # Removing build files
 bin/
 build/
+builds/
 .gradle/
 
 # Removing ide-specific configs

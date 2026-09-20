@@ -1,0 +1,23 @@
+2.4.4
+- Fixed ender effect particles making a pillar.
+- Implemented a new internal message API.
+- Renamed a few configs and storage keys.
+- Changes in configs across versions are updated (new configs loaded, old configs removed.)
+- If an effect item despawns or is destroyed, it can be crafted again.
+- Fixed the way apophis applies skins and nametags (it works on rejoin now).
+- Fixed invis death messages so they apply if the player has the infuse effect, not the potion effect.
+- Redid the action bar code.  It stays centered now.
+- Fixed an issue with the ender effect whining in console about an event.
+- Thief effect actually hides people from tablist
+- Effect-based item enchantments get reverted to their original levels when stashed or dropped.
+- Cooldown timers don't start until after the spark ends. (Technically they do start but they're offset by the duration timer)
+- Added custom events for equipping and unequipping effects
+- The hit tracker's decay rate is now configurable.  Check the config.yml for more info
+- Thunder effect is accurate now
+- Fixed an issue with the hit tracker where hit counts were counted wrong.
+- Fixed /cleareffects
+- Made dropped heads match the player they drop from
+- Frost can now stand on powder snow
+- Emerald enchant bonus works
+- Redid effect equip/unequip handling
+- Added support for localization

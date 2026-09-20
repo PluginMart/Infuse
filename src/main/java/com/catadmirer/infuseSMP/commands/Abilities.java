@@ -1,9 +1,11 @@
 package com.catadmirer.infuseSMP.commands;
 
 import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.Messages;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-import java.util.UUID;
+import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.Message.MessageType;
+import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -18,11 +20,9 @@ public class Abilities implements CommandExecutor {
 
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!(sender instanceof Player player)) {
-            sender.sendMessage(Messages.ERROR_NOT_PLAYER.toComponent());
+            sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
             return true;
         }
-
-        final UUID playerUUID = player.getUniqueId();
 
         // Finding which slot to activate the spark for.
         String slot;
@@ -31,19 +31,24 @@ public class Abilities implements CommandExecutor {
         } else if (label.contains("rspark")) {
             slot = "2";
         } else {
-            sender.sendMessage(Messages.ERROR_INVALID_COMMAND.toComponent());
+            sender.sendMessage(new Message(MessageType.ERROR_INVALID_COMMAND).toComponent());
             return true;
         }
 
         // Getting the name of the equipped effect.
-        EffectMapping equippedEffect = plugin.getDataManager().getEffect(playerUUID, slot);
+        InfuseEffect equippedEffect = plugin.getDataManager().getEffect(player, slot);
 
         // Handling if the slot is empty.
         if (equippedEffect == null) {
-            String msg = Messages.getMessage(Messages.SLOT_EMPTY);
-            msg = msg.replace("%slot%", slot);
-            player.sendMessage(Messages.toComponent(msg));
+            Message msg = new Message(MessageType.SLOT_EMPTY);
+            msg.applyPlaceholder("slot", slot);
+            player.sendMessage(msg.toComponent());
             return true;
+        }
+
+        // Warning the player that they can't use the spark right now
+        if (!RegionBlocker.getInstance().canUseSpark(player) || RegionBlocker.getInstance().isEffectBlocked(player, equippedEffect)) {
+            sender.sendMessage(Message.toComponent("<red>You cannot activate your spark in this area!"));
         }
 
         equippedEffect.activateSpark(player);

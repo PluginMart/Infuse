@@ -1,11 +1,12 @@
 package com.catadmirer.infuseSMP.effects;
 
-import com.catadmirer.infuseSMP.Infuse;
+import com.catadmirer.infuseSMP.EffectConstants;
+import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.events.TenHitEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import com.catadmirer.infuseSMP.managers.EffectMapping;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Particle;
@@ -16,129 +17,92 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.Listener;
-import org.bukkit.event.entity.*;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityDamageEvent.DamageCause;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
-public class Fire implements Listener {
-    private static Infuse plugin;
-    private final Map<UUID, Integer> hitCounter = new HashMap<>();
+import java.util.UUID;
 
-    public Fire(Infuse plugin) {
-        Fire.plugin = plugin;
+public class Fire extends InfuseEffect {
+    public Fire() {
+        this(false);
     }
 
-    public static void applyPassiveEffects(Player player) {
-        if (plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) {
-            player.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, 40, 0, false, false));
-            if (player.isInLava()) {
-                player.setGliding(true);
-            } else if (player.isInPowderedSnow()) {
-                player.setGliding(true);
+    public Fire(boolean augmented) {
+        super("fire", EffectIds.FIRE, augmented, EffectConstants.potionColor(EffectIds.FIRE), EffectConstants.ritualColor(EffectIds.FIRE));
+    }
+
+    @Override
+    public void equip(Player owner) {
+        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        owner.addPotionEffect(new PotionEffect(PotionEffectType.FIRE_RESISTANCE, -1, 0, false, false));
+    }
+
+    @Override
+    public void unequip(Player owner) {
+        owner.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
+    }
+
+    @Override
+    public void activateSpark(Player owner) {
+        UUID playerUUID = owner.getUniqueId();
+
+        if (CooldownManager.isOnCooldown(playerUUID, "fire")) return;
+        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+
+        owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1, 1);
+
+        final double radius = plugin.getMainConfig().fireSparkRadius();
+        for (Entity entity : owner.getNearbyEntities(radius, radius, radius)) {
+            if (!(entity instanceof LivingEntity)) continue;
+            if (entity == owner) continue;
+            if (!RegionBlocker.getInstance().canBeTargetedBySpark(entity)) continue;
+            if (RegionBlocker.getInstance().isEffectBlocked(entity, this)) continue;
+
+            entity.setFireTicks(100);
+        }
+
+        spawnSparkEffect(owner);
+        new BukkitRunnable() {
+            public void run() {
+                owner.getWorld().spawnParticle(Particle.EXPLOSION, owner.getLocation(), 1);
             }
-        }
+        }.runTaskLater(plugin, 20L);
+
+        // Applying cooldowns and durations for the effect
+        long cooldown = plugin.getMainConfig().cooldown(this);
+        long duration = plugin.getMainConfig().duration(this);
+
+        CooldownManager.setTimes(playerUUID, "fire", duration, cooldown);
     }
 
-    @EventHandler
-    public void onCancelSwim(EntityToggleGlideEvent event) {
-        if (event.isGliding()) return;
-        if (!(event.getEntity() instanceof Player player)) return;
-        if (!plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) return;
-        
-        if (player.isInLava() || player.isInPowderedSnow()) {
-            event.setCancelled(true);
-        }
+    @Override
+    public InfuseEffect getRegularVersion() {
+        return new Fire();
     }
 
-    @EventHandler
-    public void onMove(PlayerMoveEvent event) {
-        Player player = event.getPlayer();
-        boolean inLava = player.isInLava();
-        Vector direction = player.getLocation().getDirection().normalize();
-        if (inLava && plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) {
-            if (event.getFrom().distanceSquared(event.getTo()) < 0.01) return;
-            double boostStrength = 0.6;
-            Vector newVelocity = direction.multiply(boostStrength);
-            player.setVelocity(newVelocity);
-        }
+    @Override
+    public InfuseEffect getAugmentedVersion() {
+        return new Fire(true);
     }
 
-    @EventHandler
-    public void onEntityShootBow(EntityShootBowEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            if (plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) {
-                if (event.getForce() >= 1 && event.getProjectile() instanceof Projectile projectile) {
-                    projectile.setFireTicks(100);
-                }
-            }
-        }
+    @Override
+    public Message getName() {
+        return new Message(augmented ? Message.MessageType.AUG_FIRE_NAME : Message.MessageType.FIRE_NAME);
     }
 
-    @EventHandler
-    public void onEntityDamage(EntityDamageEvent event) {
-        if (event.getEntity() instanceof Player player) {
-            if (event.getCause() == DamageCause.FALL) {
-                if (plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) {
-                    Material blockType = player.getLocation().getBlock().getType();
-                    if (blockType == Material.LAVA || blockType == Material.LAVA_CAULDRON) {
-                        event.setCancelled(true);
-                    }
-
-                }
-            }
-        }
+    @Override
+    public Message getLore() {
+        return new Message(augmented ? Message.MessageType.AUG_FIRE_LORE : Message.MessageType.FIRE_LORE);
     }
 
-    @EventHandler
-    public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
-        if (event.getDamager() instanceof Player player) {
-            if (plugin.getDataManager().hasEffect(player, EffectMapping.FIRE)) {
-                UUID uuid = player.getUniqueId();
-                int count = this.hitCounter.getOrDefault(uuid, 0) + 1;
-                if (count >= 10) {
-                    event.getEntity().setFireTicks(100);
-                    count = 0;
-                }
-
-                this.hitCounter.put(uuid, count);
-            }
-        }
-    }
-
-    public static void activateSpark(Boolean isAugmented, Player player) {
-        UUID playerUUID = player.getUniqueId();
-
-        if (!CooldownManager.isOnCooldown(playerUUID, "fire")) {
-            player.getWorld().playSound(player.getLocation(), Sound.BLOCK_BEACON_ACTIVATE, 1, 1);
-
-            for (Entity entity : player.getNearbyEntities(5, 5, 5)) {
-                if (entity instanceof LivingEntity && entity != player) {
-                    entity.setFireTicks(100);
-                }
-            }
-
-            spawnSparkEffect(player);
-            new BukkitRunnable() {
-                public void run() {
-                    player.getWorld().spawnParticle(Particle.EXPLOSION, player.getLocation(), 1);
-                }
-            }.runTaskLater(plugin, 20L);
-            
-            // Applying cooldowns and durations for the effect
-            long cooldown = plugin.getConfigFile().cooldown(isAugmented ? EffectMapping.AUG_FIRE : EffectMapping.FIRE);
-            long duration = plugin.getConfigFile().duration(isAugmented ? EffectMapping.AUG_FIRE : EffectMapping.FIRE);
-
-            CooldownManager.setDuration(playerUUID, "fire", duration);
-            CooldownManager.setCooldown(playerUUID, "fire", cooldown);
-        }
-    }
-
-    private static void spawnSparkEffect(final Player caster) {
+    private void spawnSparkEffect(final Player caster) {
         (new BukkitRunnable() {
             int tick = 0;
 
@@ -146,36 +110,39 @@ public class Fire implements Listener {
                 if (this.tick >= 100) {
                     startDarkRedDustEffect(caster.getLocation(), caster);
                     this.cancel();
-                } else {
-                    Location center = caster.getLocation();
-                    World world = center.getWorld();
-                    if (this.tick > 0 && this.tick % 20 == 0) {
-                        world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
+                    return;
+                }
 
-                        for(int angle = 0; angle < 360; angle += 20) {
-                            double rad = Math.toRadians(angle);
-                            double offsetX = 5 * Math.cos(rad);
-                            double offsetZ = 5 * Math.sin(rad);
-                            Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
-                            world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
-                        }
+                Location center = caster.getLocation();
+                World world = center.getWorld();
+                if (this.tick > 0 && this.tick % 20 == 0) {
+                    world.playSound(center, Sound.ENTITY_PLAYER_HURT_ON_FIRE, 1, 1);
 
-                        for (Player target : world.getPlayers()) {
-                            if (!target.equals(caster) && target.getLocation().distance(center) <= 5) {
-                                target.damage(8, caster);
-                            }
-                        }
+                    for(int angle = 0; angle < 360; angle += 20) {
+                        double rad = Math.toRadians(angle);
+                        double offsetX = 5 * Math.cos(rad);
+                        double offsetZ = 5 * Math.sin(rad);
+                        Location particleLoc = center.clone().add(offsetX, 0.1, offsetZ);
+                        world.spawnParticle(Particle.LAVA, particleLoc, 10, 0.05, 0.05, 0.05, 0.01);
                     }
 
-                    ++this.tick;
+                    for (Player target : world.getPlayers()) {
+                        if (target.equals(caster)) continue;
+                        if (target.getLocation().distance(center) > 5) continue;
+                        if (!RegionBlocker.getInstance().canBeTargetedBySpark(target)) continue;
+                        if (RegionBlocker.getInstance().isEffectBlocked(target, Fire.this)) continue;
+                        target.damage(8, caster);
+                    }
                 }
+
+                ++this.tick;
             }
         }).runTaskTimer(plugin, 0L, 1L);
     }
 
-    private static void startDarkRedDustEffect(final Location startLoc, Player caster) {
+    private void startDarkRedDustEffect(final Location startLoc, Player caster) {
         final World world = startLoc.getWorld();
-        double explosionRadius = 5;
+        final double explosionRadius = plugin.getMainConfig().fireSparkExplosionRadius();
         for (Player target : world.getPlayers()) {
             if (!target.equals(caster) && target.getLocation().distance(startLoc) <= explosionRadius) {
                 target.setVelocity(new Vector(0, 2, 0));
@@ -189,26 +156,77 @@ public class Fire implements Listener {
             public void run() {
                 if (this.tick >= 60) {
                     this.cancel();
-                } else {
-                    double baseRadius = 5;
-                    double spreadFactor = this.tick * 0.1;
-                    double circleRadius = baseRadius + spreadFactor;
-                    double particleHeightOffset = this.tick * 3;
-                    if (particleHeightOffset > 30) {
-                        this.cancel();
-                    } else {
-                        for(int angle = 0; angle < 360; ++angle) {
-                            double rad = Math.toRadians(angle);
-                            double offsetX = circleRadius * Math.cos(rad);
-                            double offsetZ = circleRadius * Math.sin(rad);
-                            Location particleLoc = startLoc.clone().add(offsetX, particleHeightOffset, offsetZ);
-                            world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
-                        }
-
-                        ++this.tick;
-                    }
+                    return;
                 }
+
+                double circleRadius = explosionRadius + this.tick * 0.1;
+                double particleHeightOffset = this.tick * 3;
+                if (particleHeightOffset > 30) {
+                    this.cancel();
+                    return;
+                }
+
+                for(int angle = 0; angle < 360; ++angle) {
+                    double rad = Math.toRadians(angle);
+                    double offsetX = circleRadius * Math.cos(rad);
+                    double offsetZ = circleRadius * Math.sin(rad);
+                    Location particleLoc = startLoc.clone().add(offsetX, particleHeightOffset, offsetZ);
+                    world.spawnParticle(Particle.DUST_PILLAR, particleLoc, 3, 0, 0, 0, 0, Material.REDSTONE_BLOCK.createBlockData());
+                }
+
+                ++this.tick;
             }
         }).runTaskTimer(plugin, 0L, 1L);
+    }
+
+    //// Listeners ////
+    //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+        Vector direction = player.getLocation().getDirection().normalize();
+
+        if (!player.isInLava()) return;
+        if (!plugin.getDataManager().hasEffect(player, this)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (event.getFrom().distanceSquared(event.getTo()) < 0.01) return;
+
+        double boostStrength = plugin.getMainConfig().firePassiveWalkSpeed();
+        Vector newVelocity = direction.multiply(boostStrength);
+        player.setVelocity(newVelocity);
+    }
+
+    @EventHandler
+    public void onEntityShootBow(EntityShootBowEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (!plugin.getDataManager().hasEffect(player, this)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+
+        if (event.getForce() >= 1 && event.getProjectile() instanceof Projectile projectile) {
+            projectile.setFireTicks(100);
+        }
+    }
+
+    @EventHandler
+    public void onEntityDamage(EntityDamageEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (event.getCause() != DamageCause.FALL) return;
+        if (!plugin.getDataManager().hasEffect(player, this)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        Material blockType = player.getLocation().getBlock().getType();
+        if (blockType == Material.LAVA || blockType == Material.LAVA_CAULDRON) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void fireCombustTarget(TenHitEvent event) {
+        Player attacker = event.getAttacker();
+        if (!plugin.getDataManager().hasEffect(attacker, this)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (RegionBlocker.getInstance().isEffectBlocked(event.getTarget(), this)) return;
+
+        event.getTarget().setFireTicks(100);
     }
 }

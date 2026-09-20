@@ -1,13 +1,14 @@
 package com.catadmirer.infuseSMP.util;
 
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextColor;
-
 public class MessageUtil {
-    public static Component formatTime(long totalSeconds, TextColor color) {
+    public static String formatTime(long totalSeconds) {
         long minutes = totalSeconds / 60;
         long seconds = totalSeconds % 60;
-        String timeString = minutes + ":" + String.format("%02d", seconds);
-        return Component.text(timeString).color(color).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD);
+
+        if (minutes == 0) {
+            return String.valueOf(seconds);
+        }
+
+        return minutes + ":" + String.format("%02d", seconds);
     }
 }

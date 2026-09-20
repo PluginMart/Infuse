@@ -1,7 +1,8 @@
 package com.catadmirer.infuseSMP.inventories;
 
-import com.catadmirer.infuseSMP.Messages;
+import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.util.InventoryUtils;
+import io.papermc.paper.datacomponent.DataComponentTypes;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -9,7 +10,6 @@ import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 public class StationSelectionMenu implements InventoryHolder {
@@ -25,19 +25,18 @@ public class StationSelectionMenu implements InventoryHolder {
 
         // Creating the crafting table option
         ItemStack craftingTable = new ItemStack(Material.CRAFTING_TABLE);
-        ItemMeta craftingMeta = craftingTable.getItemMeta();
-        craftingMeta.displayName(Messages.toComponent("<dark_red>Crafting Table"));
-        craftingTable.setItemMeta(craftingMeta);
+        craftingTable.setData(DataComponentTypes.CUSTOM_NAME, Message.toComponent("<dark_red>Crafting Table"));
 
         // Creating the brewing stand option
         ItemStack brewingStand = new ItemStack(Material.BREWING_STAND);
-        ItemMeta brewingMeta = brewingStand.getItemMeta();
-        brewingMeta.displayName(Messages.toComponent("<dark_red>Brewing Stand"));
-        brewingStand.setItemMeta(brewingMeta);
+        brewingStand.setData(DataComponentTypes.CUSTOM_NAME, Message.toComponent("<dark_red>Brewing Stand"));
 
         // Putting the options into the inventory
         inventory.setItem(11, craftingTable);
         inventory.setItem(15, brewingStand);
+
+        // Locking the inventory
+        InventoryUtils.lockInventory(inventory);
     }
 
     @Override

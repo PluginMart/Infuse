@@ -2,11 +2,10 @@ name: Infuse
 version: '$version'
 main: com.catadmirer.infuseSMP.Infuse
 api-version: '1.21.4'
-authors: [CatAdmirer, TurboJax]
-softdepend: [PlaceholderAPI]
+authors: [CatAdmirer, TurboJax, duff_mans_jnr]
+softdepend: [PlaceholderAPI, WorldGuard]
 libraries:
 - com.h2database:h2:$h2Version
-
 commands:
   infuse:
     description: Base command for Infuse
@@ -14,7 +13,7 @@ commands:
   controls:
     description: Toggle controls between offhand and mainhand.
     usage: /controls
-  cleareffect:
+  cleareffects:
     description: Clear all effects from a player.
     usage: /cleareffects <player>
     permission: op
@@ -42,6 +41,9 @@ commands:
   recipes:
     description: Check the limits
     usage: /recipes
+  draw:
+    description: Draws a line between two coordinates
+    usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
 permissions:
   ability.use:
     description: Allows the player to use abilities.

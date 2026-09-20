@@ -1,201 +1,188 @@
-recipes:
-  emerald:
-    enabled: true
-    shape:
-      - "WSW"
-      - "OEO"
-      - "CTC"
-    ingredients:
-      W: WILD_ARMOR_TRIM_SMITHING_TEMPLATE
-      S: SNIFFER_EGG
-      O: OMINOUS_BOTTLE
-      E: EMERALD_BLOCK
-      C: ENDER_CHEST
-      T: ENCHANTING_TABLE
+emerald:
+  enabled: true
+  shape:
+    - "WSW"
+    - "OEO"
+    - "CTC"
+  ingredients:
+    W: WILD_ARMOR_TRIM_SMITHING_TEMPLATE
+    S: SNIFFER_EGG
+    O: OMINOUS_BOTTLE
+    E: EMERALD_BLOCK
+    C: ENDER_CHEST
+    T: ENCHANTING_TABLE
 
-  feather:
-    enabled: true
-    shape:
-      - "BPB"
-      - "FHF"
-      - "BPB"
-    ingredients:
-      B: BREEZE_ROD
-      P: PHANTOM_MEMBRANE
-      F: FEATHER
-      H: HEAVY_CORE
+feather:
+  enabled: true
+  shape:
+    - "BPB"
+    - "FHF"
+    - "BPB"
+  ingredients:
+    B: BREEZE_ROD
+    P: PHANTOM_MEMBRANE
+    F: FEATHER
+    H: HEAVY_CORE
 
-  fire:
-    enabled: true
-    shape:
-      - "URU"
-      - "NPN"
-      - "URU"
-    ingredients:
-      U: NETHERITE_UPGRADE_SMITHING_TEMPLATE
-      R: RESPAWN_ANCHOR
-      N: NETHERITE_INGOT
-      P: MUSIC_DISC_PIGSTEP
+fire:
+  enabled: true
+  shape:
+    - "URU"
+    - "NPN"
+    - "URU"
+  ingredients:
+    U: NETHERITE_UPGRADE_SMITHING_TEMPLATE
+    R: RESPAWN_ANCHOR
+    N: NETHERITE_INGOT
+    P: MUSIC_DISC_PIGSTEP
 
-  aug_ender:
-    enabled: true
-    shape:
-      - "RAR"
-      - "APA"
-      - "RAR"
-    ingredients:
-      R: DRAGON_HEAD
-      A: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE
-      P: DRAGON_EGG
+ender:
+  enabled: true
+  shape:
+    - "RAR"
+    - "APA"
+    - "RAR"
+  ingredients:
+    R: DRAGON_HEAD
+    A: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE
+    P: DRAGON_EGG
+  egg_replacement: ENDER_EYE
 
-  ender:
-    enabled: true
-    shape:
-      - "RAR"
-      - "APA"
-      - "RAR"
-    ingredients:
-      R: DRAGON_HEAD
-      A: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE
-      P: ENDER_EYE
+frost:
+  enabled: true
+  shape:
+    - "TPT"
+    - "HDH"
+    - "TPT"
+  ingredients:
+    T: FLOW_ARMOR_TRIM_SMITHING_TEMPLATE
+    P: PEARLESCENT_FROGLIGHT
+    H: GOAT_HORN
+    D: MUSIC_DISC_CREATOR
 
-  frost:
-    enabled: true
-    shape:
-      - "TPT"
-      - "HDH"
-      - "TPT"
-    ingredients:
-      T: FLOW_ARMOR_TRIM_SMITHING_TEMPLATE
-      P: PEARLESCENT_FROGLIGHT
-      H: GOAT_HORN
-      D: MUSIC_DISC_CREATOR
+haste:
+  enabled: true
+  shape:
+    - "DBD"
+    - "GEG"
+    - "DND"
+  ingredients:
+    D: DIAMOND_BLOCK
+    B: BEACON
+    G: GOLD_BLOCK
+    E: DEEPSLATE_EMERALD_ORE
+    N: NETHERITE_PICKAXE
 
-  haste:
-    enabled: true
-    shape:
-      - "DBD"
-      - "GEG"
-      - "DND"
-    ingredients:
-      D: DIAMOND_BLOCK
-      B: BEACON
-      G: GOLD_BLOCK
-      E: DEEPSLATE_EMERALD_ORE
-      N: NETHERITE_PICKAXE
+heart:
+  enabled: true
+  shape:
+    - "PTP"
+    - "EBE"
+    - "PTP"
+  ingredients:
+    P: POTION
+    T: TOTEM_OF_UNDYING
+    E: ENCHANTED_GOLDEN_APPLE
+    B: BEETROOT
 
-  heart:
-    enabled: true
-    shape:
-      - "PTP"
-      - "EBE"
-      - "PTP"
-    ingredients:
-      P: POTION
-      T: TOTEM_OF_UNDYING
-      E: ENCHANTED_GOLDEN_APPLE
-      B: BEETROOT
+invis:
+  enabled: true
+  shape:
+    - "EME"
+    - "SOS"
+    - "ERE"
+  ingredients:
+    E: ENDER_EYE
+    M: MUSIC_DISC_5
+    S: SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE
+    O: OMINOUS_TRIAL_KEY
+    R: RECOVERY_COMPASS
 
-  invis:
-    enabled: true
-    shape:
-      - "EME"
-      - "SOS"
-      - "ERE"
-    ingredients:
-      E: ENDER_EYE
-      M: MUSIC_DISC_5
-      S: SILENCE_ARMOR_TRIM_SMITHING_TEMPLATE
-      O: OMINOUS_TRIAL_KEY
-      R: RECOVERY_COMPASS
+ocean:
+  enabled: true
+  shape:
+    - "EHE"
+    - "TCT"
+    - "EHE"
+  ingredients:
+    E: TIDE_ARMOR_TRIM_SMITHING_TEMPLATE
+    H: HEART_OF_THE_SEA
+    T: TRIDENT
+    C: CONDUIT
 
-  ocean:
-    enabled: true
-    shape:
-      - "EHE"
-      - "TCT"
-      - "EHE"
-    ingredients:
-      E: TIDE_ARMOR_TRIM_SMITHING_TEMPLATE
-      H: HEART_OF_THE_SEA
-      T: TRIDENT
-      C: CONDUIT
+regen:
+  enabled: true
+  shape:
+    - "EHE"
+    - "PAP"
+    - "EME"
+  ingredients:
+    E: END_CRYSTAL
+    H: HONEY_BLOCK
+    P: PEARLESCENT_FROGLIGHT
+    A: AXOLOTL_BUCKET
+    M: MUSIC_DISC_CREATOR_MUSIC_BOX
 
-  regen:
-    enabled: true
-    shape:
-      - "EHE"
-      - "PAP"
-      - "EME"
-    ingredients:
-      E: END_CRYSTAL
-      H: HONEY_BLOCK
-      P: PEARLESCENT_FROGLIGHT
-      A: AXOLOTL_BUCKET
-      M: MUSIC_DISC_CREATOR_MUSIC_BOX
+speed:
+  enabled: true
+  shape:
+    - "RSR"
+    - "DHE"
+    - "RNR"
+  ingredients:
+    R: RABBIT_FOOT
+    S: SADDLE
+    D: DUNE_ARMOR_TRIM_SMITHING_TEMPLATE
+    H: DIAMOND_HORSE_ARMOR
+    E: EYE_ARMOR_TRIM_SMITHING_TEMPLATE
+    N: NETHERITE_BOOTS
 
-  speed:
-    enabled: true
-    shape:
-      - "RSR"
-      - "DHE"
-      - "RNR"
-    ingredients:
-      R: RABBIT_FOOT
-      S: SADDLE
-      D: DUNE_ARMOR_TRIM_SMITHING_TEMPLATE
-      H: DIAMOND_HORSE_ARMOR
-      E: EYE_ARMOR_TRIM_SMITHING_TEMPLATE
-      N: NETHERITE_BOOTS
+strength:
+  enabled: true
+  shape:
+    - "PRP"
+    - "SWA"
+    - "PRP"
+  ingredients:
+    P: PLAYER_HEAD
+    R: RIB_ARMOR_TRIM_SMITHING_TEMPLATE
+    S: NETHERITE_SWORD
+    W: WITHER_ROSE
+    A: NETHERITE_AXE
 
-  strength:
-    enabled: true
-    shape:
-      - "PRP"
-      - "SWA"
-      - "PRP"
-    ingredients:
-      P: PLAYER_HEAD
-      R: RIB_ARMOR_TRIM_SMITHING_TEMPLATE
-      S: NETHERITE_SWORD
-      W: WITHER_ROSE
-      A: NETHERITE_AXE
+thunder:
+  enabled: true
+  shape:
+    - "BLB"
+    - "TCT"
+    - "BLB"
+  ingredients:
+    B: BOLT_ARMOR_TRIM_SMITHING_TEMPLATE
+    L: LODESTONE
+    T: TRIDENT
+    C: CREEPER_HEAD
 
-  thunder:
-    enabled: true
-    shape:
-      - "BLB"
-      - "TCT"
-      - "BLB"
-    ingredients:
-      B: BOLT_ARMOR_TRIM_SMITHING_TEMPLATE
-      L: LODESTONE
-      T: TRIDENT
-      C: CREEPER_HEAD
+apophis:
+  enabled: false
+  shape:
+    - "BLB"
+    - "LCL"
+    - "BLB"
+  ingredients:
+    B: RIB_ARMOR_TRIM_SMITHING_TEMPLATE
+    L: NETHERITE_INGOT
+    C: NETHER_STAR
 
-  apophis:
-    enabled: false
-    shape:
-      - "BLB"
-      - "LCL"
-      - "BLB"
-    ingredients:
-      B: RIB_ARMOR_TRIM_SMITHING_TEMPLATE
-      L: NETHERITE_INGOT
-      C: NETHER_STAR
-
-  thief:
-    enabled: false
-    shape:
-      - "BLB"
-      - "CDC"
-      - "ZXZ"
-    ingredients:
-      B: ENCHANTED_GOLDEN_APPLE
-      L: ENDER_EYE
-      C: PLAYER_HEAD
-      D: SHEARS
-      Z: RABBIT_FOOT
-      X: SCULK_CATALYST
-
-
+thief:
+  enabled: false
+  shape:
+    - "BLB"
+    - "CDC"
+    - "ZXZ"
+  ingredients:
+    B: ENCHANTED_GOLDEN_APPLE
+    L: ENDER_EYE
+    C: PLAYER_HEAD
+    D: SHEARS
+    Z: RABBIT_FOOT
+    X: SCULK_CATALYST

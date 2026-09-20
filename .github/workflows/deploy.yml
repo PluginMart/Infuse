@@ -1,0 +1,168 @@
+name: Automatic Infuse Deployments
+on: workflow_dispatch
+
+env:
+  MAVEN_USERNAME: infuse
+  MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+
+jobs:
+  data_collector:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version_finder.outputs.result }}
+      channel: ${{ steps.channel_finder.outputs.result }}
+      prev_version: ${{ steps.prev_version_finder.outputs.result }}
+      full_version: ${{ steps.full_version_finder.outputs.result }}
+      changelog: ${{ steps.changelog.outputs.result }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          ref: "dev/2.4.5"
+      - name: Finding version
+        id: version_finder
+        run: |
+          VERSION=$(cat gradle.properties | grep "version=" | cut -d= -f2)
+          echo "result=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION  " >> $GITHUB_STEP_SUMMARY
+      - name: Finding channel
+        id: channel_finder
+        run: |
+          CHANNEL=$(cat gradle.properties | grep "channel=" | cut -d= -f2)
+          echo "result=$CHANNEL" >> $GITHUB_OUTPUT
+          echo "Channel: $CHANNEL  " >> $GITHUB_STEP_SUMMARY
+      - name: Finding previous version
+        id: prev_version_finder
+        run: |
+          PREV_VERSION=$(git describe --tags $(git rev-list --tags --max-count=1))
+          echo "result=$PREV_VERSION" >> $GITHUB_OUTPUT
+          echo "Previous Version: $PREV_VERSION  " >> $GITHUB_STEP_SUMMARY
+      - name: Finding the new version
+        id: full_version_finder
+        run: |
+          VERSION="${{ steps.version_finder.outputs.result }}"
+          CHANNEL="${{ steps.channel_finder.outputs.result }}"
+          BUILD_NUMBER=1
+          
+          if git tag | grep -E "${VERSION}-${CHANNEL}[0-9]+$" >/dev/null; then
+            BUILD_NUMBER=$(($(git tag | grep -E "${VERSION}-${CHANNEL}[0-9]+$" | sed "s/.*-${CHANNEL}//" | sort -n | tail -1) + 1))
+          fi
+          
+          echo "Build #$BUILD_NUMBER  " >> $GITHUB_STEP_SUMMARY
+          FULL_VERSION="${VERSION}-${CHANNEL}${BUILD_NUMBER}"
+          echo "result=$FULL_VERSION" >> $GITHUB_OUTPUT
+          echo "Full Version: $FULL_VERSION  " >> $GITHUB_STEP_SUMMARY
+      - name: Creating the changelog
+        id: changelog
+        run: |
+          CHANGELOG="$(git log --pretty=format:'%s  ' "${{ steps.prev_version_finder.outputs.result }}..")"
+          {
+              echo 'result<<EOF'
+              echo "$CHANGELOG"
+              echo EOF
+          } >> "$GITHUB_OUTPUT"
+          echo "# Changelog:  " >> $GITHUB_STEP_SUMMARY 
+          echo "$CHANGELOG" >>  $GITHUB_STEP_SUMMARY
+  # Tagging the latest version
+  tag-release:
+    runs-on: ubuntu-latest
+    needs: data_collector
+    permissions:
+      contents: write
+    steps:
+      - name: Tagging latest version
+        uses: actions/github-script@v9
+        with:
+          script: |
+            // Tagging release
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${{ needs.data_collector.outputs.full_version }}`,
+              sha: context.sha
+            });
+  # Building for multiple minecraft versions.
+  # These builds are not published.  They are made just so that we can make sure the plugin will work on each version we want to support.
+  test-builds:
+    runs-on: ubuntu-latest
+    needs: data_collector
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          ref: "dev/2.4.5"
+      - name: Setup Java 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: temurin
+      - name: Setup Java 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Modifying gradle.properties
+        run: |
+          sed -i "s/javaVersion=.*/javaVersion=21/" gradle.properties
+          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.4/" gradle.properties
+      - name: "Building for 1.21.4"
+        run: ./gradlew build
+      - name: Modifying gradle.properties
+        run: |
+          sed -i "s/javaVersion=.*/javaVersion=25/" gradle.properties
+          sed -i "s/minecraftVersion=.*/minecraftVersion=26.1/" gradle.properties
+      - name: "Building for 26.1"
+        run: ./gradlew build
+      - name: Modifying gradle.properties
+        run: |
+          sed -i "s/javaVersion=.*/javaVersion=25/" gradle.properties
+          sed -i "s/minecraftVersion=.*/minecraftVersion=26.2/" gradle.properties
+      - name: "Building for 26.2"
+        run: ./gradlew build
+  # Publishing to maven
+  maven-publish:
+    needs:
+      - data_collector
+      - test-builds
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          ref: "dev/2.4.5"
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: temurin
+      - name: Setup gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Modifying gradle.properties
+        run: |
+          sed -i "s/version=.*/version=${{ needs.data_collector.outputs.full_version }}/" gradle.properties
+          sed -i "s/javaVersion=.*/javaVersion=21/" gradle.properties
+          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.4/" gradle.properties
+      - name: "Publishing build"
+        run: ./gradlew publish
+  # Publishing to modrinth
+  modrinth-publish:
+    needs:
+      - data_collector
+      - maven-publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publishing build for 1.21.x
+        uses: cloudnode-pro/modrinth-publish@v2
+        with:
+          token: ${{ secrets.MODRINTH_TOKEN }}
+          project: x1wqx4cm
+          version: ${{ needs.data_collector.outputs.full_version }}
+          channel: ${{ needs.data_collector.outputs.channel }}
+          changelog: ${{ needs.data_collector.outputs.changelog }}
+          loaders: '["paper", "purpur"]'
+          game-versions: 1.21.4 - 26.1.2
+          files: https://maven.turbojax.org/releases/com/catadmirer/infuse/${{ needs.data_collector.outputs.full_version }}/infuse-${{ needs.data_collector.outputs.full_version }}.jar
+      - run: echo "Published infuse-${{ needs.data_collector.outputs.full_version }}.jar to modrinth for versions 1.21.4-26.1.2" >> $GITHUB_STEP_SUMMARY

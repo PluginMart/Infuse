@@ -12,10 +12,16 @@
 #╚██████╗╚██████╔╝██║ ╚████║██║     ██║╚██████╔╝██╗   ██║   ██║ ╚═╝ ██║███████╗
 # ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝╚═╝     ╚═╝ ╚═════╝ ╚═╝   ╚═╝   ╚═╝     ╚═╝╚══════╝
 
+# We have some basic localization support.
+# We support "en_US", "tr", "ru", and "es"
+lang: en_US
+
 allow_infinite_effects: false
 
 ritual_duration: 600  # Duration in seconds (10 minutes)
 ritual_duration_ender: 3600 # Duration in seconds (1hr)
+
+regular_effect_broadcast: true
 
 ritual_beacon: true
 
@@ -25,21 +31,36 @@ player_head_drops: true
 
 enable_discord_broadcasts: false
 
-discord_webhook_url: ""
+# Sets where the data will be stored.
+# IMPORTANT: Data is not transferred between nodes.  To move data to different storage types, export it to YAML then import it.
+# (Exported data is the same format as the YAML storage mode, so no exporting is needed if you already use the YAML config.)
+# This config IS NOT UPDATED when you use `/infuse reload`.  You need to RESTART THE SERVER to change this config
+# Supported values:
+# - "H2"
+# - "YAML"
+storage_mode: YAML
 
-invis_deaths: false # Change death messages in messages.yml (WILL ONLY APPLY TO INVIS ONES), made by Duckiee2
+discord_webhook_url: ""
 
 brewing_gui: true
 
-effect_drops: Random
+# Determines what effect is dropped.
+# "random" = Drops effect 1 or 2 at random.  If no effect is in the random slot, it will drop the effect in the other slot.
+# "prefer_1" = Drops the effect in slot 1.  If no effect is in slot 1, it will drop the effect in slot 2.
+# "prefer_2" = Drops the effect in slot 2.  If no effect is in slot 2, it will drop the effect in slot 1.
+# "only_1" = Drops the effect in slot 1.  If no effect is in slot 1, nothing happens.
+# "only_2" = Drops the effect in slot 2.  If no effect is in slot 2, nothing happens.
+# "none" = No effects will drop
+effect_drops: random
 
-# Random = Random effect drops
-# 1/2 = Slot 1/2 Drops
-# None = None drop
+# The number of seconds that it takes for 1 hit to be removed from the hit timer.
+# This is primarily used to trigger the "on ten hit" abilities of each effect.
+# To trigger them, you need to hit your target 10 times with the specified number of seconds
+hit_counter_decay_seconds: 15
 
 join_effects_enabled: false
 
-join_effects: # Same Names from messages.yml
+join_effects:
   - ocean
   - emerald
   - fire
@@ -63,25 +84,51 @@ craft_limits:
   apophis:  [1, 3]
   thief:    [1, 3]
 
+#
+# To blacklist from using a ability in a certain world, in the 'blacklisted-worlds:' in,
+# your chosen effect, add the world's name (The EXACT name) to the list.
+#
 
 # Full cooldown is duration + cooldown
 invis:
+  hide_kills: false
+  hide_deaths: false
   cooldown:
     default: 121
     augmented: 61
   duration:
     default: 20
     augmented: 25
+  blacklisted-worlds:
 
 apophis:
+  xp_stolen_per_hit: 15
+  xp_stolen_percent: 1
+  percent_xp_to_share: 0.5
+  lock_duration_seconds: 10
   cooldown:
     default: 125
     augmented: 75
   duration:
     default: 15
     augmented: 18
+  enchantment:
+    looting_level: 5
+  spark:
+    radius: 5
+    explosion-radius: 5
+  passive:
+    # How fast should they be able to walk while in lava?
+    walk-speed: 0.6
+  multiplier-xp:
+    standard: 2
+    use-effect: 4
+  blacklisted-worlds:
 
 emerald:
+  xp_stolen_per_hit: 15
+  xp_stolen_percent: 1
+  percent_xp_to_share: 0.5
   lock_duration_seconds: 10
   cooldown:
     default: 91
@@ -89,6 +136,12 @@ emerald:
   duration:
     default: 30
     augmented: 35
+  enchantment:
+    looting_level: 5
+  multiplier-xp:
+    standard: 2
+    use-effect: 4
+  blacklisted-worlds:
 
 ender:
   cooldown:
@@ -97,6 +150,12 @@ ender:
   duration:
     default: 15
     augmented: 20
+  passive:
+    radius: 10
+  spark:
+    # WARNING: The higher this value is, the more it can impact server performance.
+    max-distance: 15
+  blacklisted-worlds:
 
 feather:
   cooldown:
@@ -105,6 +164,10 @@ feather:
   duration:
     default: 2
     augmented: 2
+  land:
+    radius: 4
+    damage: 8
+  blacklisted-worlds:
 
 fire:
   cooldown:
@@ -113,6 +176,13 @@ fire:
   duration:
     default: 5
     augmented: 6
+  passive:
+    # How fast should they be able to walk while in lava?
+    walk-speed: 0.6
+  spark:
+    radius: 5
+    explosion-radius: 5
+  blacklisted-worlds:
 
 frost:
   cooldown:
@@ -121,6 +191,14 @@ frost:
   duration:
     default: 15
     augmented: 20
+  passive:
+    # WARNING: The higher this value is, the more it can impact server performance.
+    snow-changing-radius: 3
+    # How fast should they be able to walk in powdered snow?
+    walk-speed: 0.6
+  spark:
+    radius: 5
+  blacklisted-worlds:
 
 haste:
   cooldown:
@@ -129,6 +207,11 @@ haste:
   duration:
     default: 15
     augmented: 20
+  enchantment:
+    fortune_level: 5
+    efficiency_level: 10
+    unbreaking_level: 5
+  blacklisted-worlds:
 
 heart:
   cooldown:
@@ -137,6 +220,7 @@ heart:
   duration:
     default: 60
     augmented: 80
+  blacklisted-worlds:
 
 ocean:
   cooldown:
@@ -145,6 +229,13 @@ ocean:
   duration:
     default: 15
     augmented: 20
+  passive:
+    drown-strength: 5
+    drown-damage: 1
+  spark:
+    drown-strength: 20
+    drown-damage: 2
+  blacklisted-worlds:
 
 regen:
   cooldown:
@@ -153,6 +244,9 @@ regen:
   duration:
     default: 15
     augmented: 30
+  spark:
+    heal-trusted-radius: 5
+  blacklisted-worlds:
 
 speed:
   dashMultiplier: 20
@@ -163,6 +257,7 @@ speed:
   duration:
     default: 1
     augmented: 1
+  blacklisted-worlds:
 
 strength:
   cooldown:
@@ -171,7 +266,7 @@ strength:
   duration:
     default: 15
     augmented: 20
-
+  blacklisted-worlds:
 
 thunder:
   cooldown:
@@ -180,20 +275,22 @@ thunder:
   duration:
     default: 10
     augmented: 10
-
+  spark:
+    base-radius: 10
+    per-player-boost-radius: 0.3
+  blacklisted-worlds:
 
 thief:
   cooldown:
     default: 300
     augmented: 150
-
+  blacklisted-worlds:
 
 ocean_pulling:
   pull:
     interval: 20 # In ticks (20 ticks = 1 second)
     radius: 5
     strength: 0.3
-
 
 extra_effects:
   Apophis: false

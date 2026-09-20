@@ -170,19 +170,18 @@ public class Infuse extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(hitTracker, this);
 
         // Registering events for all the listeners
-        Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(dataManager), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(), this);
         Bukkit.getPluginManager().registerEvents(new CrafterCraftListener(), this);
-        Bukkit.getPluginManager().registerEvents(new EntityDeathListener(dataManager), this);
-        Bukkit.getPluginManager().registerEvents(new EntityDropItemListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new EntityPickupItemListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new EntityDeathListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EntityDropItemListener(), this);
+        Bukkit.getPluginManager().registerEvents(new EntityPickupItemListener(), this);
         Bukkit.getPluginManager().registerEvents(new EffectCraftManager(), this);
-        Bukkit.getPluginManager().registerEvents(new InventoryClickListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new ItemDespawnListener(dataManager), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerDeathListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerItemConsumeListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerJoinListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerQuitListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerSwapHandItemsListener(dataManager), this);
+        Bukkit.getPluginManager().registerEvents(new InventoryClickListener(), this);
+        Bukkit.getPluginManager().registerEvents(new ItemDespawnListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerDeathListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerItemConsumeListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerJoinListener(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerQuitListener(), this);
     }
 
     private void registerEffects() {

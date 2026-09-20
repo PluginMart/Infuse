@@ -1,17 +1,13 @@
 package com.catadmirer.infuseSMP.listeners;
 
-import com.catadmirer.infuseSMP.managers.DataManager;
+import com.catadmirer.infuseSMP.Infuse;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 
 public class PlayerSwapHandItemsListener implements Listener {
-    private final DataManager dataManager;
-
-    public PlayerSwapHandItemsListener(DataManager dataManager) {
-        this.dataManager = dataManager;
-    }
+    private final Infuse plugin = Infuse.getInstance();
 
     /**
      * Listens for when the player swaps the items in their main and offhand.
@@ -22,7 +18,7 @@ public class PlayerSwapHandItemsListener implements Listener {
     @EventHandler
     public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
-        if (!dataManager.getControlMode(player.getUniqueId()).equals("offhand")) return;
+        if (!plugin.getDataManager().getControlMode(player.getUniqueId()).equals("offhand")) return;
 
         if (!player.isSneaking()) {
             player.performCommand("/lspark");

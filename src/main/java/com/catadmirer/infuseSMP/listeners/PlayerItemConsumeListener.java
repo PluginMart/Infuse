@@ -14,11 +14,7 @@ import com.catadmirer.infuseSMP.managers.EffectManager.EquipResult;
 import com.catadmirer.infuseSMP.managers.EffectManager.EquipResultType;
 
 public class PlayerItemConsumeListener implements Listener {
-    private final Infuse plugin;
-
-    public PlayerItemConsumeListener(Infuse plugin) {
-        this.plugin = plugin;
-    }
+    private final Infuse plugin = Infuse.getInstance();
 
     /**
      * Handling when players drink an infuse potion.

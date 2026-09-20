@@ -5,6 +5,7 @@ import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 
+import com.catadmirer.infuseSMP.managers.RecipeManager;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -12,18 +13,14 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.persistence.PersistentDataType;
 
 public class PlayerJoinListener implements Listener {
-    private final Infuse plugin;
-
-    public PlayerJoinListener(Infuse plugin) {
-        this.plugin = plugin;
-    }
+    private final Infuse plugin = Infuse.getInstance();
 
     @EventHandler
     public void giveRecipes(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
         // Giving the player all the infuse recipes
-        InfuseEffect.getRegisteredEffects().stream().map(plugin.getRecipeManager()::getRecipeKey).forEach(player::discoverRecipe);
+        InfuseEffect.getRegisteredEffects().stream().map(RecipeManager::getRecipeKey).forEach(player::discoverRecipe);
     }
 
     @EventHandler

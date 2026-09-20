@@ -14,11 +14,7 @@ import com.catadmirer.infuseSMP.managers.EffectManager.EquipResult;
 import com.catadmirer.infuseSMP.managers.EffectManager.EquipResultType;
 
 public class PlayerDeathListener implements Listener {
-    private final Infuse plugin;
-
-    public PlayerDeathListener(Infuse plugin) {
-        this.plugin = plugin;
-    }
+    private final Infuse plugin = Infuse.getInstance();
 
     @SuppressWarnings("UnstableApiUsage")
     @EventHandler

@@ -9,6 +9,7 @@ import com.catadmirer.infuseSMP.inventories.EffectChooser;
 import com.catadmirer.infuseSMP.inventories.RecipeGUI;
 import com.catadmirer.infuseSMP.inventories.RecipeListGUI;
 
+import com.catadmirer.infuseSMP.managers.RecipeManager;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.EventHandler;
@@ -18,12 +19,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
 public class InventoryClickListener implements Listener {
-    private final Infuse plugin;
-
-    public InventoryClickListener(Infuse plugin) {
-        this.plugin = plugin;
-    }
-
     @EventHandler
     public void clickEffectChooser(InventoryClickEvent event) {
         HumanEntity player = event.getWhoClicked();
@@ -91,18 +86,19 @@ public class InventoryClickListener implements Listener {
         HumanEntity player = event.getWhoClicked();
 
         // Erroring out if the recipe is not enabled
-        if (!plugin.getRecipeManager().isRecipeEnabled(effect)) {
+        RecipeManager recipeManager = Infuse.getInstance().getRecipeManager();
+        if (!recipeManager.isRecipeEnabled(effect)) {
             player.sendMessage(new Message(MessageType.RECIPE_DISABLED).toComponent());
             return;
         }
 
-        if (plugin.getRecipeManager().getRecipe(effect).getChoiceMap().isEmpty()) {
+        if (recipeManager.getRecipe(effect).getChoiceMap().isEmpty()) {
             player.sendMessage(new Message(MessageType.RECIPE_NOT_FOUND).toComponent());
             return;
         }
 
         // Opening the recipe gui
-        Inventory recipeGui = new RecipeGUI(plugin.getRecipeManager(), effect).getInventory();
+        Inventory recipeGui = new RecipeGUI(recipeManager, effect).getInventory();
         player.closeInventory();
         player.openInventory(recipeGui);
     }

@@ -9,11 +9,7 @@ import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 
 public class PlayerQuitListener implements Listener {
-    private final Infuse plugin;
-
-    public PlayerQuitListener(Infuse plugin) {
-        this.plugin = plugin;
-    }
+    private final Infuse plugin = Infuse.getInstance();
 
     /** Unequips a player's effects when they leave the game. */
     @EventHandler

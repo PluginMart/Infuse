@@ -122,7 +122,7 @@ public class RecipeManager {
         return effectRecipe;
     }
 
-    public NamespacedKey getRecipeKey(InfuseEffect effect) {
+    public static NamespacedKey getRecipeKey(InfuseEffect effect) {
         return new NamespacedKey(effect.key().namespace(), effect.getPlainKey());
     }
 }

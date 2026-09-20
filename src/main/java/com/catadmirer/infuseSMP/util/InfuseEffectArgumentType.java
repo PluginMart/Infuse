@@ -27,7 +27,12 @@ public class InfuseEffectArgumentType implements CustomArgumentType<InfuseEffect
     public InfuseEffect parse(StringReader reader) throws CommandSyntaxException {
         String key = reader.readUnquotedString();
         
-        Key effectKey = Key.key("infuse", key);
+        Key effectKey;
+        if (key.contains(":")) {
+            effectKey = Key.key(key);
+        } else {
+            effectKey = Key.key("infuse", key);
+        }
 
         if (!InfuseEffect.isRegistered(effectKey)) {
             throw ERROR_NO_EFFECT_FOUND.create(key);

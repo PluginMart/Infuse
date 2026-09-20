@@ -10,3 +10,6 @@ Update the resource pack to make the bow animation faster (maybe use cmd for spe
 Infuse Revamp Revamp
 - Armor has animations to show durability
 - hearts show icons above the player instead of numbers
+
+Make the action bar style be configurable
+Like show_cooldown_time and darker_icon

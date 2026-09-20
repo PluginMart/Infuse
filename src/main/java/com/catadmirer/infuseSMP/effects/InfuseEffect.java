@@ -111,7 +111,7 @@ public abstract class InfuseEffect implements Listener, Keyed {
         String key = item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING);
         if (key == null) return null;
 
-        return getEffect(Key.key(key));
+        return getEffect(parseKey(key));
     }
 
     /** Gets the list of registered effects. */
@@ -119,6 +119,11 @@ public abstract class InfuseEffect implements Listener, Keyed {
     @Unmodifiable
     public static List<InfuseEffect> getRegisteredEffects() {
         return List.copyOf(REGISTERED.values());
+    }
+
+    private static Key parseKey(String input) {
+        if (input.contains(":")) return Key.key(input);
+        return Key.key("infuse", input);
     }
 
     public int getId() {
@@ -286,6 +291,6 @@ public abstract class InfuseEffect implements Listener, Keyed {
         if (item == null) return false;
         if (item.getType() != Material.POTION) return false;
 
-        return key().equals(Key.key(item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING)));
+        return key().equals(parseKey(item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING)));
     }
 }

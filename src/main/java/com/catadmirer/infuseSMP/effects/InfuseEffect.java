@@ -217,7 +217,7 @@ public abstract class InfuseEffect implements Listener, Keyed {
     public char icon(boolean active, float fill) {
         fill = Math.clamp(fill, 0, 1);
 
-        // Getting the 
+        // Getting the base icon
         char icon = baseIcon();
 
         icon += ((int) (fill * 21) << 8);
@@ -232,7 +232,7 @@ public abstract class InfuseEffect implements Listener, Keyed {
      * The icon is for an inactive effect with no cooldown.
      */
     public char baseIcon() {
-        return (char) (0xe001 + (augmented ? 0x40 : 0x0) + id);
+        return (char) (0xe001 + (augmented ? 0x80 : 0x0) + id);
     }
 
     /**

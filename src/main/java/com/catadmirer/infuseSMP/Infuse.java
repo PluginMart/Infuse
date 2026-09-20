@@ -247,7 +247,13 @@ public class Infuse extends JavaPlugin {
         return null;
     }
 
+    @NonNull
     public DataManager getDataManager() {
+        // Doesn't happen now, but will happen when we need to make it change data source on reload.
+        if (dataManager == null) {
+            throw new IllegalStateException("No data manager has been initialized yet.");
+        }
+
         return dataManager;
     }
 

@@ -2,7 +2,6 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.h2.jdbcx.JdbcDataSource;
@@ -14,25 +13,23 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 import javax.sql.DataSource;
 
 @NullMarked
-public class H2DataManager extends AsyncDataManager {
-    private DataCache cache;
+public class H2DataManager extends AbstractDataManager {
+    private final Infuse plugin;
     private final DataSource dataSource;
 
     public H2DataManager(Infuse plugin) {
+        this.plugin = plugin;
         try {
             Class.forName("org.h2.Driver");
         } catch (ClassNotFoundException err) {
             Infuse.LOGGER.error("Could not load the H2 driver", err);
         }
-
-        // Creating an empty cache
-        cache = new DataCache();
 
         // Creating the JDBC DataSource
         JdbcDataSource dataSource = new JdbcDataSource();
@@ -48,7 +45,7 @@ public class H2DataManager extends AsyncDataManager {
     public void load() {
         final String createPlayerDataTable = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY NOT NULL, slot_1 VARCHAR(100), slot_2 VARCHAR(100), offhand_control BOOLEAN NOT NULL);";
         final String createTrustTable = "CREATE TABLE IF NOT EXISTS trusts(truster UUID NOT NULL, trusted UUID NOT NULL);";
-        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER PRIMARY KEY NOT NULL, crafted VARCHAR(100) NOT NULL);";
+        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect VARCHAR(100) PRIMARY KEY NOT NULL, crafted INTEGER NOT NULL);";
 
         final String getAllTrusts = "SELECT * FROM trusts;";
         final String getAllPlayerData = "SELECT * FROM player_data;";
@@ -60,25 +57,21 @@ public class H2DataManager extends AsyncDataManager {
                 stmt.execute(createPlayerDataTable);
                 stmt.execute(createTrustTable);
                 stmt.execute(createCraftedTable);
+            } catch (SQLException err) {
+                Infuse.LOGGER.error("Could not create tables", err);
             }
-
-            // Commiting any changes
-            conn.commit();
-
-            // Clearing any cached data
-            cache = new DataCache();
 
             // Loading data into the cache
             try (Statement stmt = conn.createStatement()) {
                 // Mirroring trusts
                 ResultSet results = stmt.executeQuery(getAllTrusts);
+
                 while (results.next()) {
                     UUID player = results.getObject(1, UUID.class);
                     UUID trusted = results.getObject(2, UUID.class);
 
-                    Set<UUID> playerTrusts = cache.allTrusts.computeIfAbsent(player, t -> new HashSet<>());
-                    playerTrusts.add(trusted);
-                    cache.allTrusts.put(player, playerTrusts);
+                    // Remember to initialize data with super.<method> so we don't execute sql while initializing.
+                    allTrusts.computeIfAbsent(player, k -> new HashSet<>()).add(trusted);
                 }
 
                 results.close();
@@ -87,19 +80,30 @@ public class H2DataManager extends AsyncDataManager {
                 results = stmt.executeQuery(getAllPlayerData);
                 while (results.next()) {
                     UUID player = results.getObject(1, UUID.class);
+                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
 
                     String lEffect = results.getString(2);
                     if (!results.wasNull()) {
-                        cache.leftEffects.put(player, Key.key(lEffect));
+                        InfuseEffect effect = InfuseEffect.getEffect(key(lEffect));
+                        if (effect == null) {
+                            Infuse.LOGGER.warn("Invalid effect in {}'s slot 1: {}", offlinePlayer.getName(), lEffect);
+                        } else {
+                            playerEffects.computeIfAbsent(offlinePlayer, k -> new HashMap<>()).put("1", effect.key());
+                        }
                     }
 
                     String rEffect = results.getString(3);
                     if (!results.wasNull()) {
-                        cache.rightEffects.put(player, Key.key(rEffect));
+                        InfuseEffect effect = InfuseEffect.getEffect(key(rEffect));
+                        if (effect == null) {
+                            Infuse.LOGGER.warn("Invalid effect in {}'s slot 2: {}", offlinePlayer.getName(), rEffect);
+                        } else {
+                            playerEffects.computeIfAbsent(offlinePlayer, k -> new HashMap<>()).put("2", effect.key());
+                        }
                     }
 
                     boolean offhandControl = results.getBoolean(4);
-                    cache.controlModes.put(player, offhandControl);
+                    offhandUsers.put(offlinePlayer, offhandControl);
                 }
 
                 results.close();
@@ -110,7 +114,7 @@ public class H2DataManager extends AsyncDataManager {
                     String effectKey = results.getString(1);
                     int crafted = results.getInt(2);
 
-                    cache.craftedCounts.put(Key.key(effectKey), crafted);
+                    existingCount.put(key(effectKey), crafted);
                 }
 
                 results.close();
@@ -122,28 +126,137 @@ public class H2DataManager extends AsyncDataManager {
         }
     }
 
+    // Data is saved when a setter runs
     @Override
-    public int getExistingCount(InfuseEffect effect) {
-        return cache.getExistingCount(effect);
+    public void save() {}
+
+    @Override
+    public void setExistingCount(InfuseEffect effect, int count) {
+        super.setExistingCount(effect, count);
+
+        Bukkit.getAsyncScheduler().runNow(Infuse.getInstance(), t -> {
+            // Updating the database
+            String sql = "INSERT OR REPLACE INTO crafted_effects(effect, crafted) VALUES (?, ?);";
+
+            try (Connection conn = dataSource.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, effect.key().toString());
+                stmt.setInt(2, count);
+
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                Infuse.LOGGER.error("Database error!", e);
+            }
+        });
     }
 
     @Override
-    protected void reallySetExistingCount(InfuseEffect effect, int count) {
-        // Updating the cache
-        cache.setExistingCount(effect, count);
+    public void addTrust(UUID player, UUID trusted) {
+        super.addTrust(player, trusted);
 
-        // Updating the database
-        String sql = "INSERT OR REPLACE INTO crafted_effects(effect, crafted) VALUES (?, ?);";
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            String addTrust = "INSERT INTO trusts (truster, trusted) VALUES (?, ?);";
+            try (Connection conn = dataSource.getConnection()) {
+                // Adding the rest of the players to trust
+                try (PreparedStatement stmt = conn.prepareStatement(addTrust)) {
+                    stmt.setObject(1, player);
+                    stmt.setObject(2, trusted);
 
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setString(1, effect.key().toString());
-            stmt.setInt(2, count);
+                    stmt.executeUpdate();
+                } catch (SQLException err) {
+                    Infuse.LOGGER.error("Failed to insert a trust relationship into the table.", err);
+                }
+            } catch (SQLException err) {
+                Infuse.LOGGER.info("Failed to connect to database.", err);
+            }
+        });
+    }
 
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            Infuse.LOGGER.error("Database error!", e);
-        }
+    @Override
+    public void removeTrust(UUID player, UUID trusted) {
+        super.addTrust(player, trusted);
+
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            String removeTrusted = "DELETE FROM trusts WHERE truster = ? AND trusted = ?;";
+            try (Connection conn = dataSource.getConnection()) {
+                // Adding the rest of the players to trust
+                try (PreparedStatement stmt = conn.prepareStatement(removeTrusted)) {
+                    stmt.setObject(1, player);
+                    stmt.setObject(2, trusted);
+
+                    stmt.executeUpdate();
+                } catch (SQLException err) {
+                    Infuse.LOGGER.error("Failed to remove a trust relationship from the table.", err);
+                }
+            } catch (SQLException err) {
+                Infuse.LOGGER.info("Failed to connect to database.", err);
+            }
+        });
+    }
+
+    @Override
+    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
+        super.setEffect(player, slot, effect);
+
+        // Making sure slot is "1" or "2"
+        // Logging is already done in AbstractDataManager
+        if (!slot.equals("1") && !slot.equals("2")) return;
+
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            // Updating the database
+            createNewPlayer(player);
+
+            // Constructing sql based on specified slot
+            final String setEffectSQL = "UPDATE player_data SET slot_" + slot + " = ? WHERE player = ?;";
+
+            try (Connection conn = dataSource.getConnection()) {
+                try (PreparedStatement stmt = conn.prepareStatement(setEffectSQL)) {
+                    stmt.setString(1, effect == null ? null : effect.key().toString());
+                    stmt.setObject(2, player.getUniqueId());
+
+                    stmt.executeUpdate();
+                } catch (SQLException err) {
+                    Infuse.LOGGER.error("Could not set player {}'s effect in slot {} to {}", player.getName(), slot, effect == null ? "null" : effect.key(), err);
+                }
+            } catch (SQLException err) {
+                Infuse.LOGGER.error("Could not open connection to H2 database", err);
+            }
+        });
+    }
+
+    @Override
+    public void setControlMode(OfflinePlayer player, String controlMode) {
+        super.setControlMode(player, controlMode);
+
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            // Updating the database
+            createNewPlayer(player);
+
+            boolean offhandControls;
+            if (controlMode.equals("offhand")) {
+                offhandControls = true;
+            } else if (controlMode.equals("command")) {
+                offhandControls = false;
+            } else {
+                // Logging handled in AbstractDataManager
+                return;
+            }
+
+            String sql = "UPDATE player_data SET offhand_control = ? WHERE player = ?;";
+            try (Connection conn = dataSource.getConnection()) {
+
+                try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                    stmt.setObject(1, offhandControls);
+                    stmt.setObject(2, player.getUniqueId());
+
+                    stmt.executeUpdate();
+                } catch (SQLException err) {
+                    Infuse.LOGGER.error("Could not set player {}'s offhand control to {}", player.getName(), offhandControls, err);
+                }
+            } catch (SQLException e) {
+                Infuse.LOGGER.error("Database error!", e);
+            }
+        });
     }
 
     /**
@@ -164,215 +277,4 @@ public class H2DataManager extends AsyncDataManager {
             Infuse.LOGGER.error("Database error!", e);
         }
     }
-
-    @Override
-    public Set<UUID> getTrusted(UUID player) {
-        return cache.getTrusted(player);
-    }
-
-    @Override
-    public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
-        return cache.getTrusted(player);
-    }
-
-    @Override
-    public void setTrusted(UUID player, Set<UUID> trusted) {
-
-    }
-
-    @Override
-    protected void reallySetTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
-        // Updating the cache
-        cache.setTrusted(player, allTrusted);
-
-        // Updating the database
-        Set<OfflinePlayer> trustedCopy = new HashSet<>(allTrusted);
-
-        String findUnused = "SELECT * FROM trusts WHERE truster = ?;";
-        String deleteExtra = "DELETE FROM trusts WHERE truster = ? AND trusted = ?;";
-
-        String insertTrusted = "INSERT INTO trusts (truster, trusted) VALUES (?, ?);";
-
-        try (Connection conn = dataSource.getConnection()) {
-            // Removing players who are no longer trusted and filtering out players who are already trusted from the copy of the set
-            try (PreparedStatement stmt = conn.prepareStatement(findUnused);
-                 PreparedStatement delStmt = conn.prepareStatement(deleteExtra)) {
-                stmt.setObject(1, player.getUniqueId());
-                stmt.execute();
-                ResultSet results = stmt.getResultSet();
-
-                delStmt.setObject(1, player.getUniqueId());
-
-                // Looping through the trusted players
-                while (results.next()) {
-                    OfflinePlayer trusted = Bukkit.getOfflinePlayer(results.getObject(1, UUID.class));
-
-                    // Skipping already trusted players
-                    if (trustedCopy.contains(trusted)) {
-                        trustedCopy.remove(trusted);
-                        continue;
-                    }
-
-                    // Removing players who are no longer trusted
-                    delStmt.setObject(2, trusted.getUniqueId());
-                    delStmt.addBatch();
-                }
-
-                // Executing the delete statement
-                delStmt.executeBatch();
-            } catch (SQLException e) {
-                Infuse.LOGGER.error("Database error!", e);
-            }
-
-            // Adding the rest of the players to trust
-            try (PreparedStatement stmt = conn.prepareStatement(insertTrusted)) {
-                stmt.setObject(1, player.getUniqueId());
-
-                for (OfflinePlayer trusted : trustedCopy) {
-                    stmt.setObject(2, trusted.getUniqueId());
-                    stmt.addBatch();
-                }
-
-                stmt.executeBatch();
-            } catch (SQLException err) {
-                Infuse.LOGGER.error("Failed to insert players back into the database", err);
-            }
-        } catch (SQLException err) {
-            Infuse.LOGGER.info("Failed to connect to database.", err);
-        }
-
-        throw new UnsupportedOperationException("Unimplemented method 'setTrusted'");
-    }
-
-    @Override
-    protected void reallyAddTrust(OfflinePlayer player, OfflinePlayer toTrust) {
-        // Updating the cache
-        cache.addTrust(player, toTrust);
-
-        // Updating the database
-        String insertElem = """
-                            INSERT INTO trusts (truster, trusted)
-                            SELECT ?, ?
-                            WHERE NOT EXISTS (
-                                SELECT * FROM trusts WHERE truster = ? AND trusted = ?
-                            );""";
-
-        UUID trusterUUID = player.getUniqueId();
-        UUID toTrustUUID = toTrust.getUniqueId();
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(insertElem)) {
-                stmt.setObject(1, trusterUUID);
-                stmt.setObject(2, toTrustUUID);
-                stmt.setObject(3, trusterUUID);
-                stmt.setObject(4, toTrustUUID);
-                stmt.execute();
-            } catch (SQLException err) {
-                Infuse.LOGGER.error("Failed to insert data into database", err);
-            }
-        } catch (SQLException err) {
-            Infuse.LOGGER.info("Failed to connect to database.", err);
-        }
-    }
-
-    @Override
-    protected void reallyRemoveTrust(OfflinePlayer player, OfflinePlayer untrusted) {
-        // Updating the cache
-        cache.removeTrust(player, untrusted);
-
-        // Updating the database
-        String deleteElem = "DELETE FROM trusts WHERE truster = ? AND trusted = ?";
-
-        UUID trusterUUID = player.getUniqueId();
-        UUID trustedUUID = untrusted.getUniqueId();
-
-        try (Connection conn = dataSource.getConnection()) {
-            try (PreparedStatement stmt = conn.prepareStatement(deleteElem)) {
-                stmt.setObject(1, trusterUUID);
-                stmt.setObject(2, trustedUUID);
-                stmt.execute();
-            } catch (SQLException err) {
-                Infuse.LOGGER.error("Failed to remove data from the database", err);
-            }
-        } catch (SQLException err) {
-            Infuse.LOGGER.info("Failed to connect to database.", err);
-        }
-    }
-
-    @Override
-    public boolean doesTrust(OfflinePlayer player, OfflinePlayer trusted) {
-        return cache.doesTrust(player, trusted);
-    }
-
-    @Override
-    protected void reallySetEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
-        // Updating the cache
-        cache.setEffect(player, slot, effect);
-
-        // Updating the database
-        createNewPlayer(player);
-
-        // Making sure slot is "1" or "2"
-        if (!slot.equals("1") && !slot.equals("2")) {
-            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
-            return;
-        }
-
-        // Constructing sql based on specified slot
-        final String setEffectSQL = "UPDATE player_data SET slot_" + slot + " = ? WHERE player = ?;";
-
-        try (Connection conn = dataSource.getConnection()) {
-            PreparedStatement stmt = conn.prepareStatement(setEffectSQL);
-            stmt.setString(1, effect == null ? null : effect.key().toString());
-            stmt.setObject(2, player.getUniqueId());
-
-            stmt.executeUpdate();
-        } catch (SQLException err) {
-            Infuse.LOGGER.error("Could not open connection to H2 database", err);
-        }
-    }
-
-    @Nullable
-    @Override
-    public InfuseEffect getEffect(OfflinePlayer player, String slot) {
-        return cache.getEffect(player, slot);
-    }
-
-    @Override
-    protected void reallySetControlMode(OfflinePlayer player, String controlMode) {
-        // Updating the cache
-        cache.setControlMode(player, controlMode);
-
-        // Updating the database
-        createNewPlayer(player);
-
-        boolean offhandControls;
-        if (controlMode.equals("offhand")) {
-            offhandControls = true;
-        } else if (controlMode.equals("command")) {
-            offhandControls = false;
-        } else {
-            Infuse.LOGGER.error("Invalid control mode \"{}\".  Please use \"offhand\" or \"command\"", controlMode);
-            return;
-        }
-
-        String sql = "UPDATE player_data SET offhand_control = ? WHERE player = ?;";
-        try (Connection conn = dataSource.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setObject(1, offhandControls);
-            stmt.setObject(2, player.getUniqueId());
-
-            stmt.executeUpdate();
-        } catch (SQLException e) {
-            Infuse.LOGGER.error("Database error!", e);
-        }
-    }
-
-    @Override
-    public String getControlMode(OfflinePlayer player) {
-        return cache.getControlMode(player);
-    }
-
-    @Override
-    public void applyUpdates() {}
 }

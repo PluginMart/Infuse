@@ -27,15 +27,6 @@ public class MultiTrustManager implements TrustManager {
     }
 
     @Override
-    public void setTrusted(UUID player, Set<UUID> trusted) {
-        trustManagers.forEach(m -> {
-            try {
-                m.setTrusted(player, trusted);
-            } catch (UnsupportedOperationException ignored) {}
-        });
-    }
-
-    @Override
     public void addTrust(UUID player, UUID trusted) {
         trustManagers.forEach(m -> {
             try {

@@ -2,19 +2,18 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.util.trust.TrustManager;
+import net.kyori.adventure.key.Key;
 import org.bukkit.OfflinePlayer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
-import java.util.Set;
-import java.util.UUID;
-
 @NullMarked
 public interface DataManager extends TrustManager {
-    /**
-     * Reloads the player data.
-     */
+    /** Loads the player data. */
     void load();
+
+    /** Saves the player data. */
+    void save();
 
     /**
      * Gets the number of effects that exist.
@@ -30,45 +29,6 @@ public interface DataManager extends TrustManager {
      * @param count The number of this effect that exists
      */
     void setExistingCount(InfuseEffect effect, int count);
-
-    /**
-     * Adds a player to the list of trusted people.
-     *
-     * @param player The person whose trusted list to modify.
-     * @param trusted The person the truster now trusts.
-     */
-    default void addTrust(UUID player, UUID trusted) {
-        // TODO: Override in SQL-based data managers
-        Set<UUID> allTrusted = getTrusted(player);
-        allTrusted.add(trusted);
-        setTrusted(player, allTrusted);
-    }
-
-    /**
-     * Removes a player from another player's list of trusted people.
-     * 
-     * @param player The player whose trusted list to modify.
-     * @param untrusted The person to remove from the truster's trust.
-     */
-    default void removeTrust(UUID player, UUID untrusted) {
-        // TODO: Override in SQL-based data managers
-        Set<UUID> trusted = getTrusted(player);
-        trusted.remove(untrusted);
-        setTrusted(player, trusted);
-    }
-
-    /**
-     * Checks if a player is trusted by another player.
-     * 
-     * @param player The player whose trusted list to check.
-     * @param trusted The player to check if truster trusts.
-     * 
-     * @return True if the truster trusts the toCheck player, false otherwise
-     */
-    default boolean doesTrust(UUID player, UUID trusted) {
-        // TODO: Override in SQL-based data managers
-        return getTrusted(player).contains(trusted);
-    }
 
     /**
      * Sets the infuse effect in a specific slot for a player.
@@ -148,8 +108,9 @@ public interface DataManager extends TrustManager {
      */
     String getControlMode(OfflinePlayer player);
 
-    /**
-     * Modifies the config to make any necessary changes to make old versions compatible with this new one.
-     */
-    void applyUpdates();
+    default Key key(String str) {
+        if (str.contains(":")) return Key.key(str);
+
+        return Key.key("infuse", str);
+    }
 }

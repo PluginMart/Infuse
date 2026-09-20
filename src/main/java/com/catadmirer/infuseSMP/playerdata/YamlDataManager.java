@@ -1,53 +1,63 @@
 package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
-import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import net.kyori.adventure.key.Key;
-import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jspecify.annotations.NullMarked;
-import org.jspecify.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Scanner;
-import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @NullMarked
-public class YamlDataManager implements DataManager {
+public class YamlDataManager extends AbstractDataManager {
     private final File dataFile;
-    private final YamlConfiguration config;
 
-    public YamlDataManager() {
-        this.dataFile = new File(Infuse.getInstance().getDataFolder(), "data/playerdata.yml");
-        this.config = YamlConfiguration.loadConfiguration(dataFile);
+    public YamlDataManager(Infuse plugin) {
+        this.dataFile = new File(plugin.getDataFolder(), "data/playerdata.yml");
     }
 
-    @Override
     public void load() {
         // Creating the file if it doesn't exist.
-        createFile();
+        // If the function returns false, the load function fails too.
+        if (!createFile(false)) return;
 
         // Loading the config
+        YamlConfiguration config = new YamlConfiguration();
         try {
             config.load(dataFile);
-            Infuse.LOGGER.info("Successfully loaded YAML data!");
+            Infuse.LOGGER.info("Successfully loaded {}", dataFile.getName());
         } catch (InvalidConfigurationException err) {
             Infuse.LOGGER.warn("{} contains an invalid YAML configuration.  Verify the contents of the file.", dataFile.getName());
+            return;
         } catch (IOException err) {
             Infuse.LOGGER.error("Could not find {}.  Check that it exists.", dataFile.getName());
+            return;
         }
 
+        Object oldCrafted = config.get("existing-effects");
+        if (oldCrafted != null) {
+            config.set("existing_effects", oldCrafted);
+            config.set("existing-effects", null);
+        }
+        oldCrafted = config.get("effects-crafted");
+        if (oldCrafted != null) {
+            config.set("existing-effects", oldCrafted);
+            config.set("effects-crafted", null);
+        }
     }
 
-    private void save() {
+    public void save() {
         // Creating the file if it doesn't exist.
-        createFile();
+        // If the function returns false, the load function fails too.
+        if (!createFile(false)) return;
+
+        // Creating the yaml to write
+        YamlConfiguration config = new YamlConfiguration();
+        existingCount.forEach((key, count) -> config.set("existing-effects." + key, count));
+        allTrusts.forEach((user, trusts) -> config.set(user + ".trust", trusts.stream().map(UUID::toString).toList()));
+        playerEffects.forEach((user, effects) -> effects.forEach((slot, key) -> config.set(user + "." + slot, key.asString())));
+        offhandUsers.forEach((user, mode) -> config.set(user + ".controls", mode));
 
         // Saving the config
         try {
@@ -56,113 +66,31 @@ public class YamlDataManager implements DataManager {
         } catch (IOException e) {
             Infuse.LOGGER.warn("Could not save {}.  Make sure the user has write permissions.", dataFile.getName());
         }
-
     }
 
-    /** Creates the config file. If it doesn't exist, it loads the default config. */
-    public void createFile() {
-        Infuse.getInstance().saveResource("config.yml", false);
-    }
-
-    @Override
-    public int getExistingCount(InfuseEffect effect) {
-        return config.getInt("effects-crafted." + effect.key(), 0);
-    }
-
-    @Override
-    public void setExistingCount(InfuseEffect effect, int count) {
-        config.set("effects-crafted." + effect.key(), count);
-    }
-
-    @Override
-    public Set<UUID> getTrusted(UUID player) {
-        return config.getStringList(player + ".trust").stream().map(UUID::fromString).collect(Collectors.toSet());
-    }
-
-    @Override
-    public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
-        return getTrusted(player.getUniqueId()).stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
-    }
-
-    @Override
-    public void setTrusted(UUID player, Set<UUID> trusted) {
-        config.set(player + ".trust", trusted.stream().map(UUID::toString).toList());
-
-        save();
-    }
-
-    @Override
-    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
-        setTrusted(player.getUniqueId(), allTrusted.stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
-    }
-
-    @Override
-    public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
-        // Making sure slot is "1" or "2"
-        if (!slot.equals("1") && !slot.equals("2")) {
-            Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
-            return;
+    /**
+     * Creating the config file. If it doesn't exist, it loads the default config. If the file does
+     * exist, it will only replace it if the parameter is true.
+     *
+     * @param replace Whether or not to replace the config file with the default configs.
+     * @return Whether or not the file was created successfully.
+     */
+    public boolean createFile(boolean replace) {
+        if (dataFile.exists() && replace) {
+            dataFile.delete();
+        } else if (dataFile.exists()) {
+            return true;
         }
 
-        if (effect == null) {
-            config.set(player.getUniqueId() + "." + slot, null);
-        } else {
-            config.set(player.getUniqueId() + "." + slot, effect.key());
-        }
-        save();
-    }
-
-    @Nullable
-    @Override
-    public InfuseEffect getEffect(OfflinePlayer player, String slot) {
-        String effectKey = config.getString(player.getUniqueId() + "." + slot, null);
-        if (effectKey == null) {
-            Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
-            return null;
-        }
-
-        InfuseEffect effect = InfuseEffect.getEffect(Key.key(effectKey));
-        if (effect == null) {
-            Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
-        }
-
-        return effect;
-    }
-
-    @Override
-    public void setControlMode(OfflinePlayer player, String defaultMode) {
-        config.set(player.getUniqueId() + ".controls", defaultMode);
-        save();
-    }
-
-    @Override
-    public String getControlMode(OfflinePlayer player) {
-        return config.getString(player.getUniqueId() + ".controls", "command");
-    }
-
-    @Override
-    public void applyUpdates() {
+        // Creating the file if it doesn't exist.
         try {
-            Scanner scanner = new Scanner(dataFile);
-            StringBuilder inputBuffer = new StringBuilder();
-            String line;
+            dataFile.getParentFile().mkdirs();
+            dataFile.createNewFile();
+        } catch (IOException e) {
+            Infuse.LOGGER.error("Could not create {}.  Make sure the user has the right permissions.", dataFile.getName());
+            return false;
+        }
 
-            while (scanner.hasNextLine()) {
-                line = scanner.nextLine();
-
-                // Replacing old configs
-                if (line.startsWith("effects-crafted")) {
-                    line = line.replace("effects-crafted", "existing-effects");
-                }
-                inputBuffer.append(line);
-                inputBuffer.append('\n');
-            }
-            scanner.close();
-
-            // Emptying the string buffer back into the file
-            FileOutputStream fileOut = new FileOutputStream(dataFile);
-            fileOut.write(inputBuffer.toString().getBytes());
-            fileOut.close();
-        } catch (IOException ignored) {}
+        return true;
     }
 }

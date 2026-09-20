@@ -28,12 +28,6 @@ public class BetterTeamsTrustManager implements TrustManager {
 
     /** @throws UnsupportedOperationException Is not intended to be used.  Use regular BetterTeams methods for this functionality. */
     @Override
-    public void setTrusted(UUID player, Set<UUID> trusted) {
-        throw new UnsupportedOperationException("Modify a player's team to set trusted players");
-    }
-
-    /** @throws UnsupportedOperationException Is not intended to be used.  Use regular BetterTeams methods for this functionality. */
-    @Override
     public void addTrust(UUID player, UUID trusted) {
         throw new UnsupportedOperationException("Modify a player's team to add trusted players");
     }

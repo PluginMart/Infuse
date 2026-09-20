@@ -98,7 +98,7 @@ public class Infuse extends JavaPlugin {
         // If no valid data manager is found, disable the plugin
         dataManager = switch (mainConfig.storageMode().toLowerCase()) {
             case "h2" -> new H2DataManager(this);
-            case "yaml" -> new YamlDataManager();
+            case "yaml" -> new YamlDataManager(this);
             default -> null;
         };
 
@@ -174,6 +174,10 @@ public class Infuse extends JavaPlugin {
 
         // Stopping existing rituals
         ritualManager.stopRitual();
+
+        // Checking on our async tasks
+        Bukkit.getAsyncScheduler().cancelTasks(this);
+
 
         // Finalizing the message
         LOGGER.info("Infuse Plugin has been disabled!");

@@ -1,12 +1,17 @@
 package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
+import net.kyori.adventure.key.Key;
+import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.jspecify.annotations.NullMarked;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.UUID;
 
 @NullMarked
@@ -44,6 +49,39 @@ public class YamlDataManager extends AbstractDataManager {
         if (oldCrafted != null) {
             config.set("existing-effects", oldCrafted);
             config.set("effects-crafted", null);
+        }
+
+        for (String key : config.getConfigurationSection("existing_effects").getKeys(false)) {
+            Key effectKey = key(key);
+            int existing = config.getInt("existing_effects." + key, 0);
+
+            existingCount.put(effectKey, existing);
+        }
+
+        for (String key : config.getKeys(false)) {
+            UUID id;
+            try {
+                id = UUID.fromString(key);
+            } catch (IllegalArgumentException err) {
+                // found existing-effects
+                continue;
+            }
+            OfflinePlayer player = Bukkit.getOfflinePlayer(id);
+
+            // Adding trusted players
+            config.getStringList(key + ".trust").stream()
+                    .map(UUID::fromString)
+                    .forEach(allTrusts.computeIfAbsent(id, i -> new HashSet<>())::add);
+
+            // Adding effects
+            String effectKey = config.getString(key + ".1");
+            if (effectKey != null) playerEffects.computeIfAbsent(player, p -> new HashMap<>()).put("1", key(effectKey));
+            effectKey = config.getString(key + ".2");
+            if (effectKey != null) playerEffects.computeIfAbsent(player, p -> new HashMap<>()).put("2", key(effectKey));
+
+            // Adding control modes
+            String mode = config.getString(key + ".controls");
+            if (mode != null) offhandUsers.put(player, mode.equals("offhand"));
         }
     }
 

@@ -158,7 +158,14 @@ public class DataManager implements TrustManager {
         String effectKey = config.getString(playerUUID.toString() + "." + slot, null);
         if (effectKey == null) return null;
 
-        InfuseEffect effect = InfuseEffect.getEffect(Key.key("infuse", effectKey));
+        Key key;
+        if (effectKey.contains(":")) {
+            key = Key.key(effectKey);
+        } else {
+            key = Key.key("infuse", effectKey);
+        }
+
+        InfuseEffect effect = InfuseEffect.getEffect(key);
         if (effect == null) {
             Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
         }

@@ -40,7 +40,7 @@ public class EffectFlag extends Flag<InfuseEffect> {
     @Override
     public InfuseEffect parseInput(FlagContext context) throws InvalidFlagFormat {
         String key = context.getUserInput();
-        InfuseEffect effect = InfuseEffect.getEffect(Key.key("infuse", key));
+        InfuseEffect effect = InfuseEffect.getEffect(parseKey(key));
 
         if (effect != null) return effect;
         
@@ -51,7 +51,15 @@ public class EffectFlag extends Flag<InfuseEffect> {
     public InfuseEffect unmarshal(@javax.annotation.Nullable Object o) {
         if (!(o instanceof String key)) return null;
 
-        return InfuseEffect.getEffect(Key.key("infuse", key));
+        return InfuseEffect.getEffect(parseKey(key));
+    }
+
+    private Key parseKey(String input) {
+        if (input.contains(":")) {
+            return Key.key(input);
+        }
+
+        return Key.key("infuse", input);
     }
 
     @Override

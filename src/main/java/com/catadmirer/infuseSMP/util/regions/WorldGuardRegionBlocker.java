@@ -97,9 +97,7 @@ public class WorldGuardRegionBlocker extends RegionBlocker {
 
     private boolean isEffectBlocked(Location loc, RegionAssociable assoc, InfuseEffect effect) {
         return getBlockedEffects(loc, assoc).stream()
-            .filter(e -> e.getId() == effect.getId())
-            .findAny()
-            .isPresent();
+            .anyMatch(e -> e.getId() == effect.getId());
     }
 
     @Nullable

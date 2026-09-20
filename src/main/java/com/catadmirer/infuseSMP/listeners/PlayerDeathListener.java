@@ -1,12 +1,13 @@
 package com.catadmirer.infuseSMP.listeners;
 
+import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.ResolvableProfile;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.managers.EffectManager.EquipResult;
@@ -19,6 +20,7 @@ public class PlayerDeathListener implements Listener {
         this.plugin = plugin;
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     @EventHandler
     public void dropPlayerHeads(PlayerDeathEvent event) {
         Player player = event.getEntity();
@@ -27,7 +29,7 @@ public class PlayerDeathListener implements Listener {
         if (!dropHead) return;
 
         ItemStack playerHead = new ItemStack(Material.PLAYER_HEAD);
-        playerHead.editMeta(SkullMeta.class, meta -> meta.setOwningPlayer(player));
+        playerHead.setData(DataComponentTypes.PROFILE, ResolvableProfile.resolvableProfile(player.getPlayerProfile()));
 
         player.getWorld().dropItem(player.getLocation(), playerHead);
     }
@@ -39,8 +41,12 @@ public class PlayerDeathListener implements Listener {
      */
     @EventHandler
     public void dropEffect(PlayerDeathEvent event) {
-        EquipResult result;
         Player player = event.getEntity();
+
+        // Skipping natural deaths if the config allows
+        if (player.getKiller() == null && !plugin.getMainConfig().dropOnNaturalDeath()) return;
+
+        EquipResult result;
         String dropMode = plugin.getMainConfig().effectDrops();
         switch (dropMode.toLowerCase()) {
             case "random" -> {

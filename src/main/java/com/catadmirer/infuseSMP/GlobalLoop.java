@@ -4,8 +4,6 @@ import com.catadmirer.infuseSMP.effects.Heart;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.catadmirer.infuseSMP.extraeffects.Apophis;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
-import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
-
 import org.bukkit.Bukkit;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
@@ -32,6 +30,7 @@ public class GlobalLoop extends BukkitRunnable {
         this.cancel();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void run() {
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -45,7 +44,7 @@ public class GlobalLoop extends BukkitRunnable {
 
             // Applying passive effects to the player
             if (lEffect != null) {
-                final boolean shouldBlock = RegionBlocker.getInstance().isEffectBlocked(player, lEffect);
+                final boolean shouldBlock = plugin.getRegionBlocker().isEffectBlocked(player, lEffect);
                 boolean isBlocked = lEffectDisabled.contains(player.getUniqueId());
 
                 if (shouldBlock && !isBlocked) {
@@ -63,7 +62,7 @@ public class GlobalLoop extends BukkitRunnable {
 
             // Applying passive effects to the player
             if (rEffect != null) {
-                final boolean shouldBlock = RegionBlocker.getInstance().isEffectBlocked(player, rEffect);
+                final boolean shouldBlock = plugin.getRegionBlocker().isEffectBlocked(player, rEffect);
                 boolean isBlocked = rEffectDisabled.contains(player.getUniqueId());
                 if (shouldBlock && !isBlocked) {
                     rEffect.unequip(player);
@@ -79,14 +78,18 @@ public class GlobalLoop extends BukkitRunnable {
             }
 
             // Making sure the apophis boost has been removed
-            if (!plugin.getDataManager().hasEffect(player, new Apophis())) {
+            Apophis apophis = (Apophis) InfuseEffect.getEffect(EffectConstants.Keys.APOPHIS);
+            if (apophis != null && !plugin.getDataManager().hasEffect(player, apophis)) {
                 AttributeInstance playerHealth = player.getAttribute(Attribute.MAX_HEALTH);
+                assert playerHealth != null;
                 playerHealth.removeModifier(Apophis.APOPHIS_BOOST);
             }
 
             // Making sure the heart boost has been removed
-            if (!plugin.getDataManager().hasEffect(player, new Heart())) {
+            Heart heart = (Heart) InfuseEffect.getEffect(EffectConstants.Keys.HEART);
+            if (heart != null && !plugin.getDataManager().hasEffect(player, heart)) {
                 AttributeInstance playerHealth = player.getAttribute(Attribute.MAX_HEALTH);
+                assert playerHealth != null;
                 playerHealth.removeModifier(Heart.heartBoost);
             }
         }

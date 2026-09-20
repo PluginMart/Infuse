@@ -2,11 +2,17 @@ package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
+import com.catadmirer.infuseSMP.managers.CooldownManager;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.ItemLore;
 import io.papermc.paper.datacomponent.item.PotionContents;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import net.kyori.adventure.bossbar.BossBar;
+import net.kyori.adventure.key.Key;
+import net.kyori.adventure.key.KeyPattern;
+import net.kyori.adventure.key.Keyed;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -18,54 +24,103 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.awt.Color;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-public abstract class InfuseEffect implements Listener {
-    private static final Map<Integer,InfuseEffect> REGISTERED_EFFECTS = new HashMap<>();
+public abstract class InfuseEffect implements Listener, Keyed {
+    private static final Map<Key,InfuseEffect> REGISTERED = new HashMap<>();
 
     public static final NamespacedKey EFFECT_KEY = new NamespacedKey("infuse", "effect_key");
     public static final NamespacedKey AUG_KEY = new NamespacedKey("infuse", "aug");
 
-    protected final String key;
+    @KeyPattern.Value
+    protected final String plainKey;
     protected final int id;
     protected final boolean augmented;
     protected final Color potionColor;
     protected final BossBar.Color ritualColor;
+    protected final Material backgroundMaterial;
     protected final Infuse plugin = Infuse.getInstance();
 
-    public InfuseEffect(String key, int id, boolean augmented, Color potionColor, BossBar.Color ritualColor) {
-        this.key = key;
+    public InfuseEffect(@KeyPattern.Value String key, int id, boolean augmented, Color potionColor, BossBar.Color ritualColor, Material backgroundMaterial) {
+        this.plainKey = key;
         this.id = id;
         this.augmented = augmented;
         this.potionColor = potionColor;
         this.ritualColor = ritualColor;
+        this.backgroundMaterial = backgroundMaterial;
     }
 
     public static boolean isRegistered(InfuseEffect effect) {
-        return REGISTERED_EFFECTS.containsKey(effect.id);
+        return isRegistered(effect.key());
+    }
+
+    public static boolean isRegistered(Key key) {
+        return REGISTERED.containsKey(key);
     }
 
     public static boolean register(InfuseEffect effect) {
+        effect = effect.getRegularVersion();
+
+        // Enforcing the id limit
         if (effect.id > 100) {
-            Infuse.LOGGER.warn("Effect id {} for {} is invalid.  Effect ids cannot be >100.", effect.id, effect.key);
+            Infuse.LOGGER.warn("Effect id {} for {} is invalid.  Effect ids cannot be >100.", effect.id, effect.key());
             return false;
         }
 
-        InfuseEffect existing = REGISTERED_EFFECTS.get(effect.id);
-        if (existing != null) {
-            Infuse.LOGGER.warn("Effect id {} has already been taken by {}.  Cannot assign it to {}.", effect.id, existing.key, effect.key);
+        if (isRegistered(effect.key())) {
+            InfuseEffect existing = REGISTERED.get(effect.key());
+            Infuse.LOGGER.warn("Effect key {} has already been taken by {}.  Cannot assign it to {}.", effect.key(), existing.key(), effect.key());
             return false;
         }
 
-        REGISTERED_EFFECTS.put(effect.id, effect);
+        // Attempting to register the effect
+        REGISTERED.put(effect.getRegularVersion().key(), effect.getRegularVersion());
+        REGISTERED.put(effect.getAugmentedVersion().key(), effect.getAugmentedVersion());
+
+        // Registering event listeners in the effect
+        Bukkit.getPluginManager().registerEvents(effect, Infuse.getInstance());
+
         return true;
     }
 
+    /**
+     * Gets a registered effect.
+     * 
+     * @param key The key of the effect.
+     * 
+     * @return The registered effect or null if no effect is registered under the specified key.
+     */
+    @Nullable
+    public static InfuseEffect getEffect(Key key) {
+        return REGISTERED.get(key);
+    }
+
+    /**
+     * Gets a registered effect.
+     * 
+     * @param item An item created by an effect.
+     * 
+     * @return The registered effect or null if the item does not come from a registered effect.
+     */
+    public static InfuseEffect getEffect(@Nullable ItemStack item) {
+        if (item == null) return null;
+        if (item.getType() != Material.POTION) return null;
+
+        String key = item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING);
+        if (key == null) return null;
+
+        return getEffect(Key.key(key));
+    }
+
+    /** Gets the list of registered effects. */
     @NonNull
     @Unmodifiable
-    public static Map<Integer,InfuseEffect> getRegisteredEffects() {
-        return Map.copyOf(REGISTERED_EFFECTS);
+    public static List<InfuseEffect> getRegisteredEffects() {
+        return List.copyOf(REGISTERED.values());
     }
 
     public int getId() {
@@ -73,11 +128,11 @@ public abstract class InfuseEffect implements Listener {
     }
 
     public String getPlainKey() {
-        return key;
+        return plainKey;
     }
 
-    public String getKey() {
-        return toString();
+    public Key key() {
+        return Key.key(plugin, toString());
     }
 
     public boolean isAugmented() {
@@ -92,6 +147,10 @@ public abstract class InfuseEffect implements Listener {
         return ritualColor;
     }
 
+    public Material getBackgroundMaterial() {
+        return backgroundMaterial;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof InfuseEffect effect)) return false;
@@ -99,17 +158,19 @@ public abstract class InfuseEffect implements Listener {
         return effect.augmented == this.augmented && effect.id == this.id;
     }
 
+    @KeyPattern.Value
     @Override
     public String toString() {
-        return (augmented ? "aug_" : "") + key;
+        return (augmented ? "aug_" : "") + plainKey;
     }
 
     public abstract void equip(Player owner);
     public abstract void unequip(Player owner);
 
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated()
     public void applyPassives(Player owner) {}
-    public abstract void activateSpark(Player owner);
+    public abstract void activateSpark(Player owner, String slot);
 
     public abstract InfuseEffect getRegularVersion();
     public abstract InfuseEffect getAugmentedVersion();
@@ -117,32 +178,59 @@ public abstract class InfuseEffect implements Listener {
     public abstract Message getName();
     public abstract Message getLore();
 
-    public char getIcon() {
-        return (char) Integer.parseInt("E" + (augmented ? 2 : 0) + String.format("%02d", id), 16);
-    }
+    /**
+     * Calculates the character for the effect's icon based on a player's cooldown/duration.
+     * 
+     * @param user The player who is being shown the icon.
+     * @param slot The slot the effect is equipped in.
+     */
+    public char getIcon(Player user, String slot) {
+        UUID uuid = user.getUniqueId();
 
-    public char getActiveIcon() {
-        return (char) Integer.parseInt("E" + (augmented ? 3 : 1) + String.format("%02d", id), 16);
-    }
+        String key = String.format("%s_%s", this.plainKey, slot);
 
-    public static InfuseEffect fromString(@Nullable String key) {
-        if (key == null) return null;
+        if (CooldownManager.isEffectActive(uuid, key)) {
+            long maxDuration = plugin.getMainConfig().duration(this);
+            long duration = CooldownManager.getEffectTimeLeft(uuid, key) / 1000;
 
-        // Checking if the effect is augmented
-        boolean augmented = key.startsWith("aug_");
-        if (augmented) {
-            key = key.substring(4);
+            return icon(true, (float) duration / maxDuration);
+        } else if (CooldownManager.isOnCooldown(uuid, key)) {
+            long maxCooldown = plugin.getMainConfig().cooldown(this);
+            long cooldown = CooldownManager.getCooldownTimeLeft(uuid, key) / 1000;
+
+            return icon(false, (float) cooldown / maxCooldown);
         }
 
-        // Searching for a matching registered effect
-        for (InfuseEffect effect : REGISTERED_EFFECTS.values()) {
-            if (!effect.getPlainKey().equals(key)) continue;
+        return baseIcon();
+    }
 
-            return augmented ? effect.getAugmentedVersion() : effect.getRegularVersion();
-        }
+    /**
+     * Calculates the character for the effect's icon.
+     * 
+     * @param active If true, it will apply the glowing border to the icon.
+     * @param fill Between 0 and 1.  0 is no darkness, 1 is completely dark
+     * 
+     * @return The unicode char for the effect's icon.
+     */
+    public char icon(boolean active, float fill) {
+        fill = Math.clamp(fill, 0, 1);
 
-        Infuse.LOGGER.warn("No effect found for string '{}'.", key);
-        return null;
+        // Getting the 
+        char icon = baseIcon();
+
+        icon += ((int) (fill * 21) << 8);
+        if (active) icon += (1 << 6);
+
+        return icon;
+    }
+
+    /**
+     * Gives the base icon for an effect.
+     * 
+     * The icon is for an inactive effect with no cooldown.
+     */
+    public char baseIcon() {
+        return (char) (0xe001 + (augmented ? 0x40 : 0x0) + id);
     }
 
     /**
@@ -156,9 +244,7 @@ public abstract class InfuseEffect implements Listener {
         // Adjusting item data
         item.setData(DataComponentTypes.CUSTOM_NAME, getName().toComponent());
         item.setData(DataComponentTypes.LORE, ItemLore.lore(getLore().toComponentList()));
-        item.editPersistentDataContainer(c -> {
-            c.set(EFFECT_KEY, PersistentDataType.STRING, toString());
-        });
+        item.editPersistentDataContainer(c -> c.set(EFFECT_KEY, PersistentDataType.STRING, key().toString()));
 
         item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().addHiddenComponents(DataComponentTypes.POTION_CONTENTS));
         item.setData(DataComponentTypes.POTION_CONTENTS, PotionContents.potionContents().customColor(org.bukkit.Color.fromARGB(potionColor.getRGB())));
@@ -168,6 +254,28 @@ public abstract class InfuseEffect implements Listener {
         }
 
         return item;
+    }
+
+    @Nullable
+    public ItemStack createItemWithLimits() {
+        // Only regular effects should be put here
+        if (isAugmented()) return null;
+
+        // Creating the potion from the effect
+        ItemStack potionItem = createItem();
+
+        // Getting an instance of the plugin to read configs
+        Infuse plugin = Infuse.getInstance();
+
+        int augLeft = plugin.getMainConfig().getCraftLimit(getAugmentedVersion()) - plugin.getDataManager().getExistingCount(getAugmentedVersion());
+        int regLeft = plugin.getMainConfig().getCraftLimit(getRegularVersion()) - plugin.getDataManager().getExistingCount(getRegularVersion());
+
+        List<Component> lore = new ArrayList<>();
+        lore.add(Message.toComponent("<gray>Augmented Limit: <aqua>" + augLeft));
+        lore.add(Message.toComponent("<gray>Regular Limit: <aqua>" + regLeft));
+        potionItem.setData(DataComponentTypes.LORE, ItemLore.lore(lore));
+
+        return potionItem;
     }
 
     /**
@@ -181,42 +289,6 @@ public abstract class InfuseEffect implements Listener {
         if (item == null) return false;
         if (item.getType() != Material.POTION) return false;
 
-        return key.equals(item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING));
-    }
-
-    public static InfuseEffect fromItem(ItemStack item) {
-        if (item == null) return null;
-        if (item.getType() != Material.POTION) return null;
-
-        String key = item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING);
-        if (key == null) return null;
-
-        return fromString(key);
-    }
-
-    /** Serializes an InfuseEffect into an int */
-    public int serialize() {
-        return (augmented ? 100 : 0) + id;
-    }
-
-    /**
-     * Deserializes an InfuseEffect from an int
-     * <br>
-     * The first two digits of an infuse effect are the effect id.  IDs 0-12 are taken by the base Effects.
-     * If the number is >= 100, then the effect will be converted to its augmented form.
-     *
-     * @param serialized The serialized int
-     */
-    public static InfuseEffect deserialize(int serialized) {
-        if (!REGISTERED_EFFECTS.containsKey(serialized % 100)) {
-            Infuse.LOGGER.warn("Could not find an effect registered to id {}", serialized % 100);
-            return null;
-        }
-
-        boolean augmented = serialized > 99;
-        int id = serialized % 100;
-        InfuseEffect effect = REGISTERED_EFFECTS.get(id);
-
-        return augmented ? effect.getAugmentedVersion() : effect.getRegularVersion();
+        return key().equals(Key.key(item.getPersistentDataContainer().get(EFFECT_KEY, PersistentDataType.STRING)));
     }
 }

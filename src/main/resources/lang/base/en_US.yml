@@ -38,6 +38,31 @@ controls_invalid_param: "<red>Invalid option. Use \"offhand\" or \"command\"."
 infuse_invalid_param: "<red>Please use the tab completions as a reference."
 infuse_invalid_slot: "<red>Invalid Argument! Could not identify slot %slot%.  Please use \"1\" or \"2\"."
 
+infuse_help:
+  - "<dark_gray>>----------< <b><dark_purple>Infuse<gold>SMP</b> <dark_gray>>----------<"
+  - "<aqua>/infuse"
+  - "<aqua> |- gui<white>: Opens the effect browser."
+  - "<aqua> |- reload<white>: Reloads the config and localization files."
+  - "<aqua> |- reroll <gold>[target]<white>: Removes any existing effects and adds a random one from the join_effects config."
+  - "<aqua> |- recipes<white>: Opens the recipe browser."
+  - "<aqua> |- giveEffect <gold>\\<target> \\<effect><white>: Gives the target an effect potion"
+  - "<aqua> |- setEffect <gold>\\<target> \\<effect> \\<slot><white>: Sets the effect a target has equipped in a specific slot."
+  - "<aqua> |- clearEffects <gold>target]<white>: Clears the targets effects.  The default target is yourself."
+  - "<aqua> |- cooldown <gold>[target]<white>: Resets the targets cooldowns.  The default target is yourself."
+  - "<aqua> |- getTrusted <gold>\\[target]<white>: Lists the players the target trusts.  The default target is yourself."
+  - "<aqua> |- controls<white>: Tells you your control mode."
+  - "<aqua> |- controls <gold>\\<offhand|command><white>: Sets your control mode.  See below."
+  - "<aqua> \\- help<white>: Prints this help message"
+  - ""
+  - "<aqua>/swap<white>: Swaps the slots of your equipped effects."
+  - "<aqua>/draw <gold>\\<loc1> \\<loc2> \\<count><white>: Draws a line of dust particles from loc1 to loc2."
+  - "<aqua>/trust <gold>\\<player><white>: Adds a player to your circle of trust."
+  - "<aqua>/untrust <gold>\\<player><white>: Removes a player from your circle of trust."
+  - "<aqua>/lspark<white>: Activates the spark of the effect in slot 1."
+  - "<aqua>/rspark<white>: Activates the spark of the effect in slot 2."
+  - "<aqua>/ldrain<white>: Removes the effect equipped in slot 1."
+  - "<aqua>/rdrain<white>: Removes the effect equipped in slot 2."
+
 infuse_controls_usage: "<red>Usage: /infuse controls <offhand|command>"
 infuse_controls_success: "<dark_red>Your controls are now %control_mode%"
 
@@ -53,7 +78,7 @@ infuse_cleareffects_success: "<green>Cleared %player_name%'s effects"
 infuse_cooldown_usage: "<red>Invalid Argument! Please use /infuse cooldown <player>"
 infuse_cooldown_success: "<green>Removed %player_name%'s cooldown"
 
-join_ability_notify: "<gray>Your ability mode is set to: %control_mode%"
+control_mode_notify: "<gray>Your ability mode is set to: %control_mode%"
 
 drain_success: "<green>You have drained your: %effect_name%"
 
@@ -73,6 +98,8 @@ error_not_op: "<red>You must be OP to run this command."
 error_invalid_command: "<red>Invalid command."
 error_ritual_active: "<red>A ritual is already in progress!"
 error_target_not_found: "<red>Player not found or not online."
+
+ritual_interrupted: "<red>The %effect_name% <reset><red>ritual was interrupted!"
 
 emerald_name: "<#009420>Emerald Effect"
 emerald_lore:

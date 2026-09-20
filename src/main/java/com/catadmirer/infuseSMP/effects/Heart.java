@@ -1,11 +1,9 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.events.TenHitEvent;
+import com.catadmirer.infuseSMP.events.TenHitsGivenEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
-import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -38,15 +36,16 @@ public class Heart extends InfuseEffect {
     }
 
     public Heart(boolean augmented) {
-        super("heart", EffectIds.HEART, augmented, EffectConstants.potionColor(EffectIds.HEART), EffectConstants.ritualColor(EffectIds.HEART));
+        super("heart", EffectConstants.Id.HEART, augmented, EffectConstants.PotionColor.HEART, EffectConstants.RitualColor.HEART, EffectConstants.BackgroundColor.HEART);
     }
 
     @Override
     public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
         attribute.addModifier(new AttributeModifier(heartBoost, 10, Operation.ADD_NUMBER));
+
         owner.heal(10);
     }
 
@@ -58,24 +57,24 @@ public class Heart extends InfuseEffect {
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(Player owner, String slot) {
         UUID playerUUID = owner.getUniqueId();
 
-        if (CooldownManager.isOnCooldown(playerUUID, "heart")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (CooldownManager.isOnCooldown(playerUUID, plainKey + "_" + slot)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
         attribute.addModifier(new AttributeModifier(heartSparkBoost, 10, Operation.ADD_NUMBER));
-        owner.heal(10);
+        owner.heal(attribute.getValue());
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
-        CooldownManager.setTimes(playerUUID, "heart", duration, cooldown);
+        CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
 
         Bukkit.getScheduler().runTaskLater(plugin, () -> attribute.removeModifier(heartSparkBoost), duration * 20);
     }
@@ -145,19 +144,19 @@ public class Heart extends InfuseEffect {
     //// These are only registered once, so they need to be able to handle being used for every player, no matter what effects they actually have
 
     @EventHandler
-    public void heartShowTargetHealth(TenHitEvent event) {
-        Player attacker = event.getAttacker();
+    public void heartShowTargetHealth(TenHitsGivenEvent event) {
+        Player attacker = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(attacker, this)) return;
 
-        this.showAndUpdateHealthAboveEntity(event.getTarget());
+        this.showAndUpdateHealthAboveEntity(event.getLastTarget());
     }
 
     @EventHandler
     public void onPlayerEat(PlayerItemConsumeEvent event) {
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         ItemStack item = event.getItem();
         if (item.getType() == Material.ENCHANTED_GOLDEN_APPLE) {

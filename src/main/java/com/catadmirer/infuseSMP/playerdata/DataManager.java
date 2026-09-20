@@ -1,14 +1,16 @@
 package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import com.catadmirer.infuseSMP.util.trust.TrustManager;
 import org.bukkit.OfflinePlayer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
+import java.util.UUID;
 
 @NullMarked
-public interface DataManager {
+public interface DataManager extends TrustManager {
     /**
      * Reloads the player data.
      */
@@ -30,29 +32,14 @@ public interface DataManager {
     void setExistingCount(InfuseEffect effect, int count);
 
     /**
-     * Gets a set of the players that the player trusts.
-     *
-     * @return The set of players trusted by the player.
-     */
-    Set<OfflinePlayer> getTrusted(OfflinePlayer player);
-
-    /**
-     * Sets the players that the truster trusts.
-     * 
-     * @param player The player to modify
-     * @param trusted The set of players the truster should now trust
-     */
-    void setTrusted(OfflinePlayer player, Set<OfflinePlayer> trusted);
-
-    /**
      * Adds a player to the list of trusted people.
-     * 
+     *
      * @param player The person whose trusted list to modify.
      * @param trusted The person the truster now trusts.
      */
-    default void addTrust(OfflinePlayer player, OfflinePlayer trusted) {
+    default void addTrust(UUID player, UUID trusted) {
         // TODO: Override in SQL-based data managers
-        Set<OfflinePlayer> allTrusted = getTrusted(player);
+        Set<UUID> allTrusted = getTrusted(player);
         allTrusted.add(trusted);
         setTrusted(player, allTrusted);
     }
@@ -63,9 +50,9 @@ public interface DataManager {
      * @param player The player whose trusted list to modify.
      * @param untrusted The person to remove from the truster's trust.
      */
-    default void removeTrust(OfflinePlayer player, OfflinePlayer untrusted) {
+    default void removeTrust(UUID player, UUID untrusted) {
         // TODO: Override in SQL-based data managers
-        Set<OfflinePlayer> trusted = getTrusted(player);
+        Set<UUID> trusted = getTrusted(player);
         trusted.remove(untrusted);
         setTrusted(player, trusted);
     }
@@ -78,7 +65,7 @@ public interface DataManager {
      * 
      * @return True if the truster trusts the toCheck player, false otherwise
      */
-    default boolean isTrusted(OfflinePlayer player, OfflinePlayer trusted) {
+    default boolean doesTrust(UUID player, UUID trusted) {
         // TODO: Override in SQL-based data managers
         return getTrusted(player).contains(trusted);
     }

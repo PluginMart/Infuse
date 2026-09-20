@@ -3,20 +3,14 @@ version: '$version'
 main: com.catadmirer.infuseSMP.Infuse
 api-version: '1.21.4'
 authors: [CatAdmirer, TurboJax, duff_mans_jnr]
-softdepend: [PlaceholderAPI, WorldGuard]
+softdepend: [PlaceholderAPI, WorldGuard, BetterTeams]
+contributors: [RealKai295, melut42]
 libraries:
 - com.h2database:h2:$h2Version
 commands:
   infuse:
     description: Base command for Infuse
-    usage: /infuse <gui|reload>
-  controls:
-    description: Toggle controls between offhand and mainhand.
-    usage: /controls
-  cleareffects:
-    description: Clear all effects from a player.
-    usage: /cleareffects <player>
-    permission: op
+    usage: /infuse help
   lspark:
     description: Activates the first ability.
     usage: /lspark
@@ -38,13 +32,52 @@ commands:
   untrust:
     description: Untrust a player
     usage: /untrust <player>
-  recipes:
-    description: Check the limits
-    usage: /recipes
   draw:
     description: Draws a line between two coordinates
     usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
 permissions:
-  ability.use:
-    description: Allows the player to use abilities.
-    default: false
+  infuse.commands.infuse.gui:
+    description: Allows players to use `/infuse gui`
+    default: op
+  infuse.commands.infuse.reload:
+    description: Allows players to use `/infuse reload`
+    default: op
+  infuse.commands.infuse.reroll:
+    description: Allows players to use `/infuse reroll`
+    default: op
+  infuse.commands.infuse.recipes:
+    description: Allows players to use `/infuse recipes`
+    default: true
+  infuse.commands.infuse.giveEffect:
+    description: Allows players to use `/infuse giveEffect`
+    default: op
+  infuse.commands.infuse.setEffect:
+    description: Allows players to use `/infuse setEffect`
+    default: op
+  infuse.commands.infuse.clearEffects:
+    description: Allows players to use `/infuse clearEffects`
+    default: op
+  infuse.commands.infuse.getTrusted:
+    description: Allows players to use `/infuse getTrusted`
+    default: true
+  infuse.commands.infuse.cooldown:
+    description: Allows players to use `/infuse cooldown`
+    default: op
+  infuse.commands.infuse.controls:
+    description: Allows players to use `/infuse controls`
+    default: true
+  infuse.commands.drain:
+    description: Allows players to use `/ldrain` and `/rdrain`
+    default: true
+  infuse.commands.draw:
+    description: Allows players to use `/draw`
+    default: true
+  infuse.commands.spark:
+    description: Allows players to use `/lspark` and `/rspark`
+    default: true
+  infuse.commands.swap:
+    description: Allows players to use `/swap`
+    default: true
+  infuse.commands.trust:
+    description: Allows players to use `/trust` and `/untrust`
+    default: true

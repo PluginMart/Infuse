@@ -1,6 +1,7 @@
 package com.catadmirer.infuseSMP.managers;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,6 +32,10 @@ public class CooldownManager {
         return 0;
     }
 
+    public static Set<String> getDurations(UUID playerUUID) {
+        return Set.copyOf(durations.getOrDefault(playerUUID, Map.of()).keySet());
+    }
+
     public static void clearSpecificDuration(UUID playerUUID, String key) {
         Map<String, Long> playerDurations = durations.get(playerUUID);
         if (playerDurations != null) {
@@ -46,7 +51,6 @@ public class CooldownManager {
                 playerDurations.entrySet().removeIf(entry -> entry.getValue() <= currentTime);
             }
         }
-
     }
 
     public static boolean isOnCooldown(UUID playerUUID, String key) {
@@ -60,11 +64,16 @@ public class CooldownManager {
     public static long getCooldownTimeLeft(UUID playerUUID, String key) {
         Map<String, Long> playerCooldowns = cooldowns.get(playerUUID);
         if (playerCooldowns != null && playerCooldowns.containsKey(key)) {
+            // ms
             long timeLeft = playerCooldowns.get(key) - System.currentTimeMillis();
             return timeLeft > 0 ? timeLeft : 0;
         }
 
         return 0;
+    }
+
+    public static Set<String> getCooldowns(UUID playerUUID) {
+        return Set.copyOf(cooldowns.getOrDefault(playerUUID, Map.of()).keySet());
     }
 
     public static void clearSpecificCooldown(UUID playerUUID, String key) {

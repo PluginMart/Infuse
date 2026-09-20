@@ -36,7 +36,7 @@ public class InventoryClickListener implements Listener {
         event.setCancelled(true);
 
         ItemStack item = event.getCurrentItem();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = InfuseEffect.getEffect(item);
 
         // Ignoring if the player clicked on something other than an effect.
         if (effect == null) return;
@@ -85,7 +85,7 @@ public class InventoryClickListener implements Listener {
 
         // Getting the clicked item and opening the recipe menu for the item.
         ItemStack clickedItem = event.getCurrentItem();
-        InfuseEffect effect = InfuseEffect.fromItem(clickedItem);
+        InfuseEffect effect = InfuseEffect.getEffect(clickedItem);
         if (effect == null) return;
 
         HumanEntity player = event.getWhoClicked();

@@ -55,7 +55,7 @@ infuse_cooldown_success: "<green>Перезарядка игрока %player_nam
 
 cleareffects_usage: "<red>Использование: /infuse clearEffects <игрок>"
 
-join_ability_notify: "<gray>Ваш режим способностей: %control_mode%"
+control_mode_notify: "<gray>Ваш режим способностей: %control_mode%"
 
 drain_success: "<green>Вы израсходовали: %effect_name%"
 

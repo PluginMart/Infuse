@@ -19,7 +19,6 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
-          ref: "dev/2.4.5"
       - name: Finding version
         id: version_finder
         run: |
@@ -64,24 +63,6 @@ jobs:
           } >> "$GITHUB_OUTPUT"
           echo "# Changelog:  " >> $GITHUB_STEP_SUMMARY 
           echo "$CHANGELOG" >>  $GITHUB_STEP_SUMMARY
-  # Tagging the latest version
-  tag-release:
-    runs-on: ubuntu-latest
-    needs: data_collector
-    permissions:
-      contents: write
-    steps:
-      - name: Tagging latest version
-        uses: actions/github-script@v9
-        with:
-          script: |
-            // Tagging release
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: `refs/tags/${{ needs.data_collector.outputs.full_version }}`,
-              sha: context.sha
-            });
   # Building for multiple minecraft versions.
   # These builds are not published.  They are made just so that we can make sure the plugin will work on each version we want to support.
   test-builds:
@@ -90,8 +71,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
-        with:
-          ref: "dev/2.4.5"
       - name: Setup Java 21
         uses: actions/setup-java@v5
         with:
@@ -104,26 +83,43 @@ jobs:
           distribution: temurin
       - name: Setup gradle
         uses: gradle/actions/setup-gradle@v6
-      - name: Modifying gradle.properties
+      - name: Prepping 1.21.11 build
         run: |
           sed -i "s/javaVersion=.*/javaVersion=21/" gradle.properties
-          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.4/" gradle.properties
-      - name: "Building for 1.21.4"
+          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.11/" gradle.properties
+      - name: Building for 1.21.11
         run: ./gradlew build
-      - name: Modifying gradle.properties
+      - name: Prepping 26.1 build
         run: |
           sed -i "s/javaVersion=.*/javaVersion=25/" gradle.properties
           sed -i "s/minecraftVersion=.*/minecraftVersion=26.1/" gradle.properties
-      - name: "Building for 26.1"
+      - name: Building for 26.1
         run: ./gradlew build
-      - name: Modifying gradle.properties
+      - name: Prepping 26.2 build
         run: |
           sed -i "s/javaVersion=.*/javaVersion=25/" gradle.properties
           sed -i "s/minecraftVersion=.*/minecraftVersion=26.2/" gradle.properties
-      - name: "Building for 26.2"
+      - name: Building for 26.2
         run: ./gradlew build
-  # Publishing to maven
-  maven-publish:
+  # Tagging the latest version
+  tag-release:
+    runs-on: ubuntu-latest
+    needs:
+      - data_collector
+      - test-builds
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+      - name: Tagging latest version
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git tag "${{ needs.data_collector.outputs.full_version }}"
+          git push origin "${{ needs.data_collector.outputs.full_version }}"
+  # Publishing to maven and modrinth
+  publish:
     needs:
       - data_collector
       - test-builds
@@ -131,8 +127,6 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v6
-        with:
-          ref: "dev/2.4.5"
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
@@ -144,17 +138,13 @@ jobs:
         run: |
           sed -i "s/version=.*/version=${{ needs.data_collector.outputs.full_version }}/" gradle.properties
           sed -i "s/javaVersion=.*/javaVersion=21/" gradle.properties
-          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.4/" gradle.properties
-      - name: "Publishing build"
+          sed -i "s/minecraftVersion=.*/minecraftVersion=1.21.11/" gradle.properties
+      - name: Building Infuse
+        run: ./gradlew build
+      - name: "Publishing build to maven"
         run: ./gradlew publish
-  # Publishing to modrinth
-  modrinth-publish:
-    needs:
-      - data_collector
-      - maven-publish
-    runs-on: ubuntu-latest
-    steps:
-      - name: Publishing build for 1.21.x
+      - name: Publishing build to modrinth
+        if: always()
         uses: cloudnode-pro/modrinth-publish@v2
         with:
           token: ${{ secrets.MODRINTH_TOKEN }}
@@ -163,6 +153,17 @@ jobs:
           channel: ${{ needs.data_collector.outputs.channel }}
           changelog: ${{ needs.data_collector.outputs.changelog }}
           loaders: '["paper", "purpur"]'
-          game-versions: 1.21.4 - 26.1.2
-          files: https://maven.turbojax.org/releases/com/catadmirer/infuse/${{ needs.data_collector.outputs.full_version }}/infuse-${{ needs.data_collector.outputs.full_version }}.jar
-      - run: echo "Published infuse-${{ needs.data_collector.outputs.full_version }}.jar to modrinth for versions 1.21.4-26.1.2" >> $GITHUB_STEP_SUMMARY
+          game-versions: 1.21.11 - 26.2
+          dependencies: |-
+            [
+              {
+                "project_id": "DKY9btbd",
+                "dependency_type": "optional"
+              },
+              {
+                "project_id": "lKEzGugV",
+                "dependency_type": "optional"
+              }
+            ]
+          files: build/libs/InfuseSMP-${{ needs.data_collector.outputs.full_version }}.jar
+      - run: echo "Published InfuseSMP-${{ needs.data_collector.outputs.full_version }}.jar to modrinth for versions 1.21.11-26.1.2" >> $GITHUB_STEP_SUMMARY

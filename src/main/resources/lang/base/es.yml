@@ -55,7 +55,7 @@ infuse_cooldown_success: "<green>Se eliminó el tiempo de reutilización de %pla
 
 cleareffects_usage: "<red>Uso: /infuse clearEffects <jugador>"
 
-join_ability_notify: "<gray>Tu modo de habilidad está configurado en: %control_mode%"
+control_mode_notify: "<gray>Tu modo de habilidad está configurado en: %control_mode%"
 
 drain_success: "<green>Has drenado tu: %effect_name%"
 

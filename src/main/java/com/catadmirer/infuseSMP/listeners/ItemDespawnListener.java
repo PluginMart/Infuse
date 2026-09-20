@@ -18,7 +18,7 @@ public class ItemDespawnListener implements Listener {
     @EventHandler
     public void lowerCraftLimitOnDespawn(ItemDespawnEvent event) {
         ItemStack item = event.getEntity().getItemStack();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = InfuseEffect.getEffect(item);
         if (effect == null) return;
 
         // Decrementing the number of crafted effects

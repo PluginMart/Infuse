@@ -18,18 +18,9 @@ lang: en_US
 
 allow_infinite_effects: false
 
-ritual_duration: 600  # Duration in seconds (10 minutes)
-ritual_duration_ender: 3600 # Duration in seconds (1hr)
-
-regular_effect_broadcast: true
-
-ritual_beacon: true
-
 empty_effect_icon: true
 
 player_head_drops: true
-
-enable_discord_broadcasts: false
 
 # Sets where the data will be stored.
 # IMPORTANT: Data is not transferred between nodes.  To move data to different storage types, export it to YAML then import it.
@@ -40,9 +31,28 @@ enable_discord_broadcasts: false
 # - "YAML"
 storage_mode: YAML
 
-discord_webhook_url: ""
-
 brewing_gui: true
+
+# If true, players will drop effects when they die from any cause.  If false, they need to be killed by another player.
+drop_on_natural_death: true
+
+#
+# Ritual configs
+#
+rituals:
+  # Ritual duration in seconds
+  duration: 600 # 10 minutes
+  # Ender effect ritual duration in seconds
+  ender_duration: 3600 # 1 hour
+  # If true, broadcasts the location of the brewing stand when crafting a regular effect.
+  broadcast_regular: true
+  # If true, will attempt to send a discord webhook to the specified url
+  send_webhooks: false
+  webhook_url: ""
+  # Whether to show an ender crystal beam at the ritual's location.
+  beacon: true
+  # If set to false, rituals will be canceled when the brewing stand is broken.
+  immortal_brewing_stands: true
 
 # Determines what effect is dropped.
 # "random" = Drops effect 1 or 2 at random.  If no effect is in the random slot, it will drop the effect in the other slot.
@@ -66,7 +76,16 @@ join_effects:
   - fire
   - speed
 
+#
+# BetterTeams configs
+#
+betterteams:
+  enabled: false
+  trust_allies: false
+
+
 # First number is the augmented limit, the second is the regular limit
+# Set to -1 to disable the limit
 craft_limits:
   emerald:  [1, 3]
   ender:    [1, 3]
@@ -85,63 +104,28 @@ craft_limits:
   thief:    [1, 3]
 
 #
-# To blacklist from using a ability in a certain world, in the 'blacklisted-worlds:' in,
+# To blacklist from using a ability in a certain world, in the 'blacklisted_worlds:' in,
 # your chosen effect, add the world's name (The EXACT name) to the list.
 #
 
 # Full cooldown is duration + cooldown
-invis:
-  hide_kills: false
-  hide_deaths: false
-  cooldown:
-    default: 121
-    augmented: 61
-  duration:
-    default: 20
-    augmented: 25
-  blacklisted-worlds:
-
-apophis:
-  xp_stolen_per_hit: 15
-  xp_stolen_percent: 1
-  percent_xp_to_share: 0.5
-  lock_duration_seconds: 10
-  cooldown:
-    default: 125
-    augmented: 75
-  duration:
-    default: 15
-    augmented: 18
-  enchantment:
-    looting_level: 5
-  spark:
-    radius: 5
-    explosion-radius: 5
-  passive:
-    # How fast should they be able to walk while in lava?
-    walk-speed: 0.6
-  multiplier-xp:
-    standard: 2
-    use-effect: 4
-  blacklisted-worlds:
-
 emerald:
-  xp_stolen_per_hit: 15
-  xp_stolen_percent: 1
-  percent_xp_to_share: 0.5
-  lock_duration_seconds: 10
   cooldown:
     default: 91
     augmented: 76
   duration:
     default: 30
     augmented: 35
-  enchantment:
+  passive:
+    xp_stolen_per_hit: 15
+    xp_stolen_percent: 1
+    percent_xp_to_share: 0.5
+    lock_duration_seconds: 10
     looting_level: 5
-  multiplier-xp:
-    standard: 2
-    use-effect: 4
-  blacklisted-worlds:
+    xp_multiplier: 2
+  spark:
+    xp_multiplier: 4
+  blacklisted_worlds: []
 
 ender:
   cooldown:
@@ -154,8 +138,8 @@ ender:
     radius: 10
   spark:
     # WARNING: The higher this value is, the more it can impact server performance.
-    max-distance: 15
-  blacklisted-worlds:
+    max_distance: 15
+  blacklisted_worlds: []
 
 feather:
   cooldown:
@@ -167,7 +151,7 @@ feather:
   land:
     radius: 4
     damage: 8
-  blacklisted-worlds:
+  blacklisted_worlds: []
 
 fire:
   cooldown:
@@ -177,12 +161,11 @@ fire:
     default: 5
     augmented: 6
   passive:
-    # How fast should they be able to walk while in lava?
-    walk-speed: 0.6
+    lava_walk_speed: 0.6
   spark:
     radius: 5
-    explosion-radius: 5
-  blacklisted-worlds:
+    explosion_radius: 5
+  blacklisted_worlds: []
 
 frost:
   cooldown:
@@ -193,12 +176,12 @@ frost:
     augmented: 20
   passive:
     # WARNING: The higher this value is, the more it can impact server performance.
-    snow-changing-radius: 3
+    snow_changing_radius: 3
     # How fast should they be able to walk in powdered snow?
-    walk-speed: 0.6
+    powdered_snow_walk_speed: 0.6
   spark:
     radius: 5
-  blacklisted-worlds:
+  blacklisted_worlds: []
 
 haste:
   cooldown:
@@ -207,11 +190,11 @@ haste:
   duration:
     default: 15
     augmented: 20
-  enchantment:
+  passive:
     fortune_level: 5
     efficiency_level: 10
     unbreaking_level: 5
-  blacklisted-worlds:
+  blacklisted_worlds: []
 
 heart:
   cooldown:
@@ -220,7 +203,18 @@ heart:
   duration:
     default: 60
     augmented: 80
-  blacklisted-worlds:
+  blacklisted_worlds: []
+
+invis:
+  hide_kills: false
+  hide_deaths: false
+  cooldown:
+    default: 121
+    augmented: 61
+  duration:
+    default: 20
+    augmented: 25
+  blacklisted_worlds:
 
 ocean:
   cooldown:
@@ -230,12 +224,15 @@ ocean:
     default: 15
     augmented: 20
   passive:
-    drown-strength: 5
-    drown-damage: 1
+    drown_strength: 5
+    drown_damage: 1
   spark:
-    drown-strength: 20
-    drown-damage: 2
-  blacklisted-worlds:
+    drown_strength: 20
+    drown_damage: 2
+    pull_interval: 20 # In ticks (20 ticks = 1 second)
+    pull_radius: 5
+    pull_strength: 0.3
+  blacklisted_worlds: []
 
 regen:
   cooldown:
@@ -245,19 +242,20 @@ regen:
     default: 15
     augmented: 30
   spark:
-    heal-trusted-radius: 5
-  blacklisted-worlds:
+    heal_trusted_radius: 5
+  blacklisted_worlds: []
 
 speed:
-  dashMultiplier: 20
-  playerVelocityMultiplier: 2
   cooldown:
     default: 21
     augmented: 11
   duration:
     default: 1
     augmented: 1
-  blacklisted-worlds:
+  spark:
+    dash_multiplier: 2
+    player_velocity_multiplier: 2
+  blacklisted_worlds: []
 
 strength:
   cooldown:
@@ -266,7 +264,7 @@ strength:
   duration:
     default: 15
     augmented: 20
-  blacklisted-worlds:
+  blacklisted_worlds: []
 
 thunder:
   cooldown:
@@ -276,22 +274,42 @@ thunder:
     default: 10
     augmented: 10
   spark:
-    base-radius: 10
-    per-player-boost-radius: 0.3
-  blacklisted-worlds:
+    base_radius: 10
+    per_player_boost_radius: 0.3
+    strikes_per_player: 3
+  blacklisted_worlds: []
+
+apophis:
+  enabled: false
+  cooldown:
+    default: 125
+    augmented: 75
+  duration:
+    default: 15
+    augmented: 18
+  passive:
+    xp_stolen_per_hit: 15
+    xp_stolen_percent: 1
+    percent_xp_to_share: 0.5
+    lock_duration_seconds: 10
+    looting_level: 5
+    lava_walk_speed: 0.6
+    xp_multiplier: 2
+  spark:
+    radius: 5
+    explosion_radius: 5
+    xp_multiplier: 4
+  blacklisted_worlds: []
 
 thief:
+  enabled: false
+  duration:
+    default: 10
+    augmented: 10
   cooldown:
     default: 300
     augmented: 150
-  blacklisted-worlds:
+  blacklisted_worlds: []
 
-ocean_pulling:
-  pull:
-    interval: 20 # In ticks (20 ticks = 1 second)
-    radius: 5
-    strength: 0.3
-
-extra_effects:
-  Apophis: false
-  Thief: false
+# Do not change this option, changing/deleting this option may lead to your configuration being wiped fresh.
+config_version: 1.0

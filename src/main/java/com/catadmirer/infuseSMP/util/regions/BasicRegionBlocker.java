@@ -45,7 +45,6 @@ public class BasicRegionBlocker extends RegionBlocker {
     @Override
     public Set<InfuseEffect> getBlockedEffects(Location loc) {
         return InfuseEffect.getRegisteredEffects()
-            .values()
             .stream()
             .filter(e -> {
                 List<NamespacedKey> worlds = Infuse.getInstance().getMainConfig().getBlacklistedWorlds(e);

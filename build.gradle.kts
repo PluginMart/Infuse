@@ -11,16 +11,17 @@ val javaVersion = (project.property("javaVersion") as String).toInt()
 val minecraftVersion: String by project
 
 repositories {
+    maven("https://repo.papermc.io/repository/maven-public/")
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://maven.enginehub.org/repo/")
-
-    maven("https://repo.papermc.io/repository/maven-public/")
+    maven("https://jitpack.io")
 }
 
 dependencies {
     compileOnly(libs.placeholderapi)
     compileOnly(libs.h2)
     compileOnly(libs.worldguard)
+    compileOnly(libs.betterteams)
     compileOnly(libs.guava)
     compileOnly(libs.gson)
 
@@ -56,6 +57,7 @@ tasks.processResources {
 }
 
 tasks.register("resetAndRun") {
+    description = "Resets the server files and reruns it"
     delete("run/plugins/$rootProject.name")
     finalizedBy("runServer")
     description = "Resets the plugin's data directory and then runs a server"

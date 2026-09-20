@@ -1,15 +1,11 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
-import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Color;
-import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.entity.LivingEntity;
@@ -17,6 +13,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -35,12 +32,12 @@ public class Speed extends InfuseEffect {
     }
 
     public Speed(boolean augmented) {
-        super("speed", EffectIds.SPEED, augmented, EffectConstants.potionColor(EffectIds.SPEED), EffectConstants.ritualColor(EffectIds.SPEED));
+        super("speed", EffectConstants.Id.SPEED, augmented, EffectConstants.PotionColor.SPEED, EffectConstants.RitualColor.SPEED, EffectConstants.BackgroundColor.SPEED);
     }
 
     @Override
     public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         speedLevels.put(owner.getUniqueId(), 0);
         owner.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, -1, 0, false, false, false));
@@ -55,7 +52,7 @@ public class Speed extends InfuseEffect {
 
     @Override
     public void applyPassives(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         UUID uuid = owner.getUniqueId();
         long lastHit = lastHitTime.getOrDefault(uuid, 0L);
@@ -67,56 +64,30 @@ public class Speed extends InfuseEffect {
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(Player owner, String slot) {
         UUID playerUUID = owner.getUniqueId();
 
-        if (CooldownManager.isOnCooldown(playerUUID, "speed")) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
+        if (CooldownManager.isOnCooldown(playerUUID, plainKey + "_" + slot)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
 
         owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
         ParticleManager.spawnEffectCloud(owner, Color.fromRGB(0xD1A44B));
-        final Vector direction = owner.getEyeLocation().getDirection().normalize();
-        double playerVelocityMultiplier = plugin.getMainConfig().speedDashMultiplier();
-        owner.setVelocity(direction.clone().multiply(playerVelocityMultiplier));
-        final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(0xE6DCAA), 1.5F);
-        final Location[] previousLocation = new Location[]{owner.getLocation().clone()};
-        final int[] ticksPassed = new int[]{0};
-        final Location anchor = owner.getLocation();
-        Bukkit.getRegionScheduler().runAtFixedRate(plugin, anchor, (task) -> {
-            if (!owner.isOnline()) {
-                task.cancel();
-                return;
-            }
 
-            Location currentLocation = owner.getLocation();
-            double distance = previousLocation[0].distance(currentLocation);
+        // Maximum angle of -15 degrees (90 is straight down, -90 straight up)
+        double rotY = Math.min(owner.getPitch(), -15);
+        double rotX = owner.getYaw();
+        double xz = Math.cos(Math.toRadians(rotY));
 
-            if (distance > 0.1) {
-                Vector step = currentLocation.toVector().subtract(previousLocation[0].toVector()).normalize().multiply(0.3);
-                Location particleLocation = previousLocation[0].clone();
-
-                for (double d = 0; d <= distance; d += step.length()) {
-                    particleLocation.add(step);
-                    owner.getWorld().spawnParticle(Particle.DUST, particleLocation, 5, 0.1, 0.05, 0.1, 0.05, dustOptions);
-                }
-
-                previousLocation[0] = currentLocation.clone();
-            }
-
-            if (ticksPassed[0] >= 3 && owner.isOnGround()) {
-                task.cancel();
-                return;
-            }
-
-            ticksPassed[0]++;
-        }, 1L, 1L);
+        Vector boost = new Vector(-xz * Math.sin(Math.toRadians(rotX)), -Math.sin(Math.toRadians(rotY)), xz * Math.cos(Math.toRadians(rotX)));
+        boost.multiply(plugin.getMainConfig().speedDashMultiplier());
+        owner.setVelocity(owner.getVelocity().add(boost));
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
-        CooldownManager.setTimes(playerUUID, "speed", duration, cooldown);
+        CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
     }
 
     @Override
@@ -139,6 +110,20 @@ public class Speed extends InfuseEffect {
         return new Message(augmented ? Message.MessageType.AUG_SPEED_LORE : Message.MessageType.SPEED_LORE);
     }
 
+    @Override
+    public char getIcon(Player user, String slot) {
+        UUID uuid = user.getUniqueId();
+
+        String key = String.format("%s_%s", this.plainKey, slot);
+
+        // The speed effect doesn't have a great way to track duration
+        if (CooldownManager.isEffectActive(uuid, key)) {
+            return icon(true, 0);
+        }
+
+        return super.getIcon(user, slot);
+    }
+
     public void updateSpeedEffect(Player owner) {
         if (!speedLevels.containsKey(owner.getUniqueId())) return;
 
@@ -156,7 +141,7 @@ public class Speed extends InfuseEffect {
     public void onEntityShootBow(EntityShootBowEvent event) {
         if (!(event.getEntity() instanceof Player player)) return;
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         long startTime = bowPullStartTime.getOrDefault(player.getUniqueId(), 0L);
         long pullTimeMs = System.currentTimeMillis() - startTime;
@@ -168,10 +153,21 @@ public class Speed extends InfuseEffect {
     }
 
     @EventHandler
+    public void sparkMovingParticles(PlayerMoveEvent event) {
+        Player player = event.getPlayer();
+
+        if (!plugin.getDataManager().hasEffect(player, this)) return;
+        if (!CooldownManager.isEffectActive(player.getUniqueId(), "speed")) return;
+
+        final Particle.DustOptions dustOptions = new Particle.DustOptions(Color.fromRGB(0xE6DCAA), 1.5F);
+        player.getWorld().spawnParticle(Particle.DUST, event.getFrom(), 5, 0.1, 0.05, 0.1, 0.05, dustOptions);
+    }
+
+    @EventHandler
     public void onEntityDamageByEntityEvent(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) return;
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         UUID uuid = player.getUniqueId();
         long currentTime = System.currentTimeMillis();

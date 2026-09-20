@@ -2,6 +2,7 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.h2.jdbcx.JdbcDataSource;
@@ -44,10 +45,10 @@ public class H2DataManager extends AsyncDataManager {
     }
 
     @Override
-    public boolean load() {
-        final String createPlayerDataTable = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY NOT NULL, slot_1 INTEGER, slot_2 INTEGER, offhand_control BOOLEAN NOT NULL);";
+    public void load() {
+        final String createPlayerDataTable = "CREATE TABLE IF NOT EXISTS player_data(player UUID PRIMARY KEY NOT NULL, slot_1 VARCHAR(100), slot_2 VARCHAR(100), offhand_control BOOLEAN NOT NULL);";
         final String createTrustTable = "CREATE TABLE IF NOT EXISTS trusts(truster UUID NOT NULL, trusted UUID NOT NULL);";
-        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER PRIMARY KEY NOT NULL, crafted INTEGER NOT NULL);";
+        final String createCraftedTable = "CREATE TABLE IF NOT EXISTS crafted_effects(effect INTEGER PRIMARY KEY NOT NULL, crafted VARCHAR(100) NOT NULL);";
 
         final String getAllTrusts = "SELECT * FROM trusts;";
         final String getAllPlayerData = "SELECT * FROM player_data;";
@@ -87,14 +88,14 @@ public class H2DataManager extends AsyncDataManager {
                 while (results.next()) {
                     UUID player = results.getObject(1, UUID.class);
 
-                    int lEffect = results.getInt(2);
+                    String lEffect = results.getString(2);
                     if (!results.wasNull()) {
-                        cache.leftEffects.put(player, lEffect);
+                        cache.leftEffects.put(player, Key.key(lEffect));
                     }
 
-                    int rEffect = results.getInt(3);
+                    String rEffect = results.getString(3);
                     if (!results.wasNull()) {
-                        cache.rightEffects.put(player, rEffect);
+                        cache.rightEffects.put(player, Key.key(rEffect));
                     }
 
                     boolean offhandControl = results.getBoolean(4);
@@ -106,10 +107,10 @@ public class H2DataManager extends AsyncDataManager {
                 // Mirroring crafted effect counts
                 results = stmt.executeQuery(getAllCrafted);
                 while (results.next()) {
-                    int effectId = results.getInt(1);
+                    String effectKey = results.getString(1);
                     int crafted = results.getInt(2);
 
-                    cache.craftedCounts.put(effectId, crafted);
+                    cache.craftedCounts.put(Key.key(effectKey), crafted);
                 }
 
                 results.close();
@@ -136,7 +137,7 @@ public class H2DataManager extends AsyncDataManager {
 
         try (Connection conn = dataSource.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
-            stmt.setInt(1, effect.serialize());
+            stmt.setString(1, effect.key().toString());
             stmt.setInt(2, count);
 
             stmt.executeUpdate();
@@ -165,8 +166,18 @@ public class H2DataManager extends AsyncDataManager {
     }
 
     @Override
+    public Set<UUID> getTrusted(UUID player) {
+        return cache.getTrusted(player);
+    }
+
+    @Override
     public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
         return cache.getTrusted(player);
+    }
+
+    @Override
+    public void setTrusted(UUID player, Set<UUID> trusted) {
+
     }
 
     @Override
@@ -289,8 +300,8 @@ public class H2DataManager extends AsyncDataManager {
     }
 
     @Override
-    public boolean isTrusted(OfflinePlayer player, OfflinePlayer trusted) {
-        return cache.isTrusted(player, trusted);
+    public boolean doesTrust(OfflinePlayer player, OfflinePlayer trusted) {
+        return cache.doesTrust(player, trusted);
     }
 
     @Override
@@ -308,11 +319,11 @@ public class H2DataManager extends AsyncDataManager {
         }
 
         // Constructing sql based on specified slot
-        final String setEffectSQL = "UPDATE player_data SET slot_1 = ? WHERE player = ?;";
+        final String setEffectSQL = "UPDATE player_data SET slot_" + slot + " = ? WHERE player = ?;";
 
         try (Connection conn = dataSource.getConnection()) {
             PreparedStatement stmt = conn.prepareStatement(setEffectSQL);
-            stmt.setObject(1, effect == null ? null : effect.serialize());
+            stmt.setString(1, effect == null ? null : effect.key().toString());
             stmt.setObject(2, player.getUniqueId());
 
             stmt.executeUpdate();

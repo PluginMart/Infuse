@@ -1,14 +1,12 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
-import com.catadmirer.infuseSMP.events.TenHitEvent;
+import com.catadmirer.infuseSMP.events.TenHitsTakenEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.ItemUtil;
-import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 import com.destroystokyo.paper.event.player.PlayerPickupExperienceEvent;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.Enchantable;
@@ -29,6 +27,7 @@ import org.bukkit.craftbukkit.inventory.view.CraftEnchantmentView;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.enchantments.EnchantmentOffer;
 import org.bukkit.entity.ExperienceOrb;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.HandlerList;
@@ -60,12 +59,12 @@ public class Emerald extends InfuseEffect {
     }
 
     public Emerald(boolean augmented) {
-        super("emerald", EffectIds.EMERALD, augmented, EffectConstants.potionColor(EffectIds.EMERALD), EffectConstants.ritualColor(EffectIds.EMERALD));
+        super("emerald", EffectConstants.Id.EMERALD, augmented, EffectConstants.PotionColor.EMERALD, EffectConstants.RitualColor.EMERALD, EffectConstants.BackgroundColor.EMERALD);
     }
 
     @Override
     public void equip(Player owner) {
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
         // Applying the potion effect to the player
         owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, -1, 0));
 
@@ -87,13 +86,13 @@ public class Emerald extends InfuseEffect {
     }
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(Player owner, String slot) {
         UUID playerUUID = owner.getUniqueId();
 
         // Making sure the player isn't on cooldown
-        if (CooldownManager.isOnCooldown(playerUUID, "emerald")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (CooldownManager.isOnCooldown(playerUUID, plainKey + "_" + slot)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         // Applying effects for the emerald spark
         owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
@@ -104,7 +103,7 @@ public class Emerald extends InfuseEffect {
 
         owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, (int) duration * 20, 4));
 
-        CooldownManager.setTimes(playerUUID, "emerald", duration, cooldown);
+        CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
     }
 
     @Override
@@ -136,7 +135,7 @@ public class Emerald extends InfuseEffect {
 
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         Infuse.LOGGER.debug("[Emerald] PlayerItemHeldEvent is for an emerald user");
 
@@ -165,31 +164,24 @@ public class Emerald extends InfuseEffect {
     }
 
     @EventHandler
-    public void tenHitEvent(TenHitEvent event) {
-        Infuse.LOGGER.debug("[Emerald] Received TenHitEvent");
-        Infuse.LOGGER.debug("[Emerald] Attacker: {}", event.getAttacker().getName());
-        Infuse.LOGGER.debug("[Emerald] Target: {}", event.getTarget().getName());
+    public void tenHitEvent(TenHitsTakenEvent event) {
+        if (!plugin.getDataManager().hasEffect(event.getPlayer(), this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(event.getPlayer(), this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(event.getLastAttacker(), this)) return;
 
-        if (!plugin.getDataManager().hasEffect(event.getTarget(), this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(event.getTarget(), this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(event.getAttacker(), this)) return;
 
-        Infuse.LOGGER.debug("[Emerald] Target has emerald effect");
-        Infuse.LOGGER.debug("[Emerald] Locking attacker's food and Exp");
-
-        new FoodAndExpLock(plugin, event.getAttacker(), plugin.getMainConfig().emeraldLockDurationSeconds());
+        new FoodAndExpLock(plugin, event.getLastAttacker(), plugin.getMainConfig().emeraldLockDurationSeconds());
     }
 
     public static class FoodAndExpLock implements Listener {
-        private final Player player;
+        private final LivingEntity player;
 
-        public FoodAndExpLock(Infuse plugin, Player player, double durationSeconds) {
+        public FoodAndExpLock(Infuse plugin, LivingEntity player, double durationSeconds) {
             this.player = player;
 
             Bukkit.getPluginManager().registerEvents(this, plugin);
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
                 HandlerList.unregisterAll(this);
-                Infuse.LOGGER.debug("[Emerald] Exp lock for {} has been lifted", player.getName());
             }, (long) (durationSeconds * 20));
         }
 
@@ -222,7 +214,7 @@ public class Emerald extends InfuseEffect {
         Player player = event.getPlayer();
 
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         ExperienceOrb orb = event.getExperienceOrb();
         int amount = orb.getExperience();
@@ -250,7 +242,7 @@ public class Emerald extends InfuseEffect {
         // Making sure the enchanter has the emerald effect
         Player player = event.getEnchanter();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         EnchantmentOffer[] offers = event.getOffers();
         Random random = new Random(player.getEnchantmentSeed());
@@ -322,8 +314,8 @@ public class Emerald extends InfuseEffect {
         if (!(event.getDamageSource().getCausingEntity() instanceof Player attacker)) return;
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
 
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(damaged, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(attacker, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(damaged, this)) return;
 
         // Getting configs
         int exp = damaged.getTotalExperience();
@@ -345,7 +337,7 @@ public class Emerald extends InfuseEffect {
 
         // Making sure the player has the emerald effect
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         ItemStack consumedItem = event.getItem();
 
@@ -372,13 +364,13 @@ public class Emerald extends InfuseEffect {
     public void expShare(PlayerExpChangeEvent event) {
         Player player = event.getPlayer();
         if (!CooldownManager.isEffectActive(player.getUniqueId(), "emerald")) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
-        for (OfflinePlayer trusted : plugin.getDataManager().getTrusted(player)) {
+        for (OfflinePlayer trusted : plugin.getTrustManager().getTrusted(player)) {
             Player trustedPlayer = trusted.getPlayer();
 
             if (trustedPlayer == null) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(trustedPlayer, this)) continue;
+            if (plugin.getRegionBlocker().isEffectBlocked(trustedPlayer, this)) continue;
 
             int toGain = (int) (event.getAmount() * plugin.getMainConfig().emeraldPercentExpToShare());
             trustedPlayer.setTotalExperience(trustedPlayer.getTotalExperience() + toGain);

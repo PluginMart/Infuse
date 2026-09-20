@@ -21,9 +21,9 @@ public class EffectChooser implements InventoryHolder {
         int[] magentaSlots = {0, 1, 2, 6, 7, 8, 9, 10, 16, 17, 18, 26, 27, 35};
         int[] purpleSlots = {36, 37, 43, 44, 45, 46, 47, 48, 50, 51, 52, 53};
         int[] lightBlueSlots = {3, 4, 5, 11, 13, 15, 19, 25, 28, 34, 38, 42};
-        InventoryUtils.setItems(inventory, magentaSlots, InventoryUtils.createNoName(Material.MAGENTA_STAINED_GLASS_PANE));
-        InventoryUtils.setItems(inventory, purpleSlots, InventoryUtils.createNoName(Material.PURPLE_STAINED_GLASS_PANE));
-        InventoryUtils.setItems(inventory, lightBlueSlots, InventoryUtils.createNoName(Material.LIGHT_BLUE_STAINED_GLASS_PANE));
+        InventoryUtils.setItems(inventory, magentaSlots, InventoryUtils.createNoTooltip(Material.MAGENTA_STAINED_GLASS_PANE));
+        InventoryUtils.setItems(inventory, purpleSlots, InventoryUtils.createNoTooltip(Material.PURPLE_STAINED_GLASS_PANE));
+        InventoryUtils.setItems(inventory, lightBlueSlots, InventoryUtils.createNoTooltip(Material.LIGHT_BLUE_STAINED_GLASS_PANE));
 
         inventory.setItem(12, new Frost(true).createItem());
         inventory.setItem(14, new Speed(true).createItem());

@@ -1,13 +1,10 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.EffectIds;
 import com.catadmirer.infuseSMP.Message;
-import com.catadmirer.infuseSMP.events.TenHitEvent;
+import com.catadmirer.infuseSMP.events.TenHitsTakenEvent;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.managers.ParticleManager;
-import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Color;
 import org.bukkit.Location;
@@ -39,7 +36,7 @@ public class Feather extends InfuseEffect {
     }
 
     public Feather(boolean augmented) {
-        super("feather", EffectIds.FEATHER, augmented, EffectConstants.potionColor(EffectIds.FEATHER), EffectConstants.ritualColor(EffectIds.FEATHER));
+        super("feather", EffectConstants.Id.FEATHER, augmented, EffectConstants.PotionColor.FEATHER, EffectConstants.RitualColor.FEATHER, EffectConstants.BackgroundColor.FEATHER);
     }
 
     @Override
@@ -49,12 +46,12 @@ public class Feather extends InfuseEffect {
     public void unequip(Player owner) {}
 
     @Override
-    public void activateSpark(Player owner) {
+    public void activateSpark(Player owner, String slot) {
         UUID playerUUID = owner.getUniqueId();
 
-        if (CooldownManager.isOnCooldown(playerUUID, "feather")) return;
-        if (!RegionBlocker.getInstance().canUseSpark(owner)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(owner, this)) return;
+        if (CooldownManager.isOnCooldown(playerUUID, plainKey + "_" + slot)) return;
+        if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         owner.getWorld().playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
         ParticleManager.spawnEffectCloud(owner, Color.fromRGB(0xBEA3CA));
@@ -67,7 +64,7 @@ public class Feather extends InfuseEffect {
         long cooldown = plugin.getMainConfig().cooldown(this);
         long duration = plugin.getMainConfig().duration(this);
 
-        CooldownManager.setTimes(playerUUID, "feather", duration, cooldown);
+        CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
 
         owner.getScheduler().runDelayed(plugin, t -> CooldownManager.setDuration(playerUUID, "feathermace", 5L), null, 10);
     }
@@ -102,7 +99,7 @@ public class Feather extends InfuseEffect {
 
         if (!player.isOnGround()) return;
         if (!CooldownManager.isEffectActive(player.getUniqueId(), "feathermace")) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         CooldownManager.setDuration(player.getUniqueId(), "feathermace", 0L);
         Location loc = player.getLocation();
@@ -110,9 +107,9 @@ public class Feather extends InfuseEffect {
 
         for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof LivingEntity target)) continue;
-            if (RegionBlocker.getInstance().isEffectBlocked(target, this)) continue;
-            if (!RegionBlocker.getInstance().canBeTargetedBySpark(target)) continue;
-            if (target instanceof Player targetPlayer && plugin.getDataManager().isTrusted(player, targetPlayer)) continue;
+            if (plugin.getRegionBlocker().isEffectBlocked(target, this)) continue;
+            if (!plugin.getRegionBlocker().canBeTargetedBySpark(target)) continue;
+            if (target instanceof Player targetPlayer && plugin.getTrustManager().doesTrust(player, targetPlayer)) continue;
 
             final double damage = plugin.getMainConfig().featherLandDamage();
             target.damage(damage);
@@ -138,12 +135,12 @@ public class Feather extends InfuseEffect {
     }
 
     @EventHandler
-    public void onTenthHit(TenHitEvent event) {
-        Player player = event.getTarget();
-        Player target = event.getAttacker();
+    public void onTenthHit(TenHitsTakenEvent event) {
+        Player player = event.getPlayer();
+        LivingEntity target = event.getLastAttacker();
 
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         target.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 100, 2));
         Location chargeLocation = player.getLocation().add(0, 1, 0);
@@ -152,6 +149,7 @@ public class Feather extends InfuseEffect {
         Vector direction = targetLocation.toVector().subtract(chargeLocation.toVector()).normalize();
         windCharge.setVelocity(direction.multiply(1));
         windCharge.setShooter(player);
+
         player.setVelocity(new Vector(0, 0.5, 0));
     }
 
@@ -160,7 +158,7 @@ public class Feather extends InfuseEffect {
         if (!(event.getEntity() instanceof Player player)) return;
         if (event.getCause() != DamageCause.FALL) return;
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         event.setCancelled(true);
     }
@@ -169,7 +167,7 @@ public class Feather extends InfuseEffect {
     public void onPlayerRightClickWindcharge(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(player, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(player, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 
         ItemStack item = player.getInventory().getItemInMainHand();
         if (item.getType() != Material.WIND_CHARGE) return;
@@ -193,7 +191,7 @@ public class Feather extends InfuseEffect {
     public void onEntityDamageByEntity(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player attacker)) return;
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
-        if (RegionBlocker.getInstance().isEffectBlocked(attacker, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(attacker, this)) return;
 
         double fallDistance = attacker.getFallDistance();
         if (fallDistance < 7) return;
@@ -204,6 +202,7 @@ public class Feather extends InfuseEffect {
         Location particleLoc = event.getDamager().getLocation();
         world.spawnParticle(Particle.GUST_EMITTER_SMALL, particleLoc, 1, 0, 0, 0, 0);
         attacker.setVelocity(new Vector(0, 1.8, 0));
+
         double multiplier = 1.1;
         event.setDamage(event.getDamage() * multiplier);
     }

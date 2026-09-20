@@ -4,25 +4,36 @@ import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import org.bukkit.command.Command;
-import org.bukkit.command.CommandExecutor;
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.tree.LiteralCommandNode;
+import io.papermc.paper.command.brigadier.CommandSourceStack;
+import io.papermc.paper.command.brigadier.Commands;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jspecify.annotations.NullMarked;
 
 @NullMarked
-public class SwapEffects implements CommandExecutor {
+public class SwapCommand {
     private final Infuse plugin;
 
-    public SwapEffects(Infuse plugin) {
+    public static LiteralCommandNode<CommandSourceStack> build(Infuse plugin) {
+        SwapCommand cmd = new SwapCommand(plugin);
+
+        return Commands.literal("swap")
+            .requires(c -> c.getSender().hasPermission("infuse.commands.swap") && c.getSender() instanceof Player)
+            .executes(cmd::swap)
+            .build();
+    }
+
+    private SwapCommand(Infuse plugin) {
         this.plugin = plugin;
     }
 
-    // Defining the command for swapping effects...
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public int swap(CommandContext<CommandSourceStack> ctx) {
+        CommandSender sender = ctx.getSource().getSender();
         if (!(sender instanceof Player player)) {
             sender.sendMessage(new Message(MessageType.ERROR_NOT_PLAYER).toComponent());
-            return true;
+            return 1;
         }
 
         // Getting the equipped effects
@@ -30,7 +41,7 @@ public class SwapEffects implements CommandExecutor {
         InfuseEffect effect2 = plugin.getDataManager().getEffect(player, "2");
         if (effect1 == null && effect2 == null) {
             player.sendMessage(new Message(MessageType.SWAP_NO_EFFECTS).toComponent());
-            return true;
+            return 1;
         }
 
         // Swapping the effects
@@ -38,6 +49,6 @@ public class SwapEffects implements CommandExecutor {
         plugin.getDataManager().setEffect(player, "2", effect1);
 
         player.sendMessage(new Message(MessageType.SWAP_SUCCESS).toComponent());
-        return true;
+        return 1;
     }
 }

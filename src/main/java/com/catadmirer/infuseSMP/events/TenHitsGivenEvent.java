@@ -1,27 +1,23 @@
 package com.catadmirer.infuseSMP.events;
 
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
+import org.bukkit.event.player.PlayerEvent;
 import org.jetbrains.annotations.NotNull;
 
-public class TenHitEvent extends Event {
+public class TenHitsGivenEvent extends PlayerEvent {
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
-    private final Player attacker;
-    private final Player target;
+    private final LivingEntity lastTarget;
 
-    public TenHitEvent(Player attacker, Player target) {
-        this.attacker = attacker;
-        this.target = target;
+    public TenHitsGivenEvent(Player attacker, LivingEntity lastTarget) {
+        super(attacker);
+        this.lastTarget = lastTarget;
     }
 
-    public Player getAttacker() {
-        return attacker;
-    }
-
-    public Player getTarget() {
-        return target;
+    public LivingEntity getLastTarget() {
+        return lastTarget;
     }
 
     @Override

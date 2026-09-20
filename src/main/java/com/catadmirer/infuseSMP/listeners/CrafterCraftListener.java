@@ -11,7 +11,7 @@ public class CrafterCraftListener implements Listener {
     @EventHandler
     public void onCrafterCraft(CrafterCraftEvent event) {
         ItemStack item = event.getResult();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = InfuseEffect.getEffect(item);
         if (effect == null) return;
 
         event.setCancelled(true);

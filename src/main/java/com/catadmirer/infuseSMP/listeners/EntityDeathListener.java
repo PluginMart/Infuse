@@ -21,7 +21,7 @@ public class EntityDeathListener implements Listener {
         if (!(event.getEntity() instanceof Item itemEntity)) return;
 
         ItemStack item = itemEntity.getItemStack();
-        InfuseEffect effect = InfuseEffect.fromItem(item);
+        InfuseEffect effect = InfuseEffect.getEffect(item);
         if (effect == null) return;
 
         // Decrementing the number of crafted effects

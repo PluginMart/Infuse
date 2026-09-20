@@ -1,12 +1,12 @@
 package com.catadmirer.infuseSMP.util;
 
-import org.jspecify.annotations.Nullable;
-
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 import com.sk89q.worldguard.protection.flags.Flag;
 import com.sk89q.worldguard.protection.flags.FlagContext;
 import com.sk89q.worldguard.protection.flags.InvalidFlagFormat;
 import com.sk89q.worldguard.protection.flags.RegionGroup;
+import net.kyori.adventure.key.Key;
+import org.jspecify.annotations.Nullable;
 
 public class EffectFlag extends Flag<InfuseEffect> {
     private final InfuseEffect defaultValue;
@@ -40,7 +40,7 @@ public class EffectFlag extends Flag<InfuseEffect> {
     @Override
     public InfuseEffect parseInput(FlagContext context) throws InvalidFlagFormat {
         String key = context.getUserInput();
-        InfuseEffect effect = InfuseEffect.fromString(key);
+        InfuseEffect effect = InfuseEffect.getEffect(Key.key("infuse", key));
 
         if (effect != null) return effect;
         
@@ -48,10 +48,10 @@ public class EffectFlag extends Flag<InfuseEffect> {
     }
 
     @Override
-    public InfuseEffect unmarshal(Object o) {
+    public InfuseEffect unmarshal(@javax.annotation.Nullable Object o) {
         if (!(o instanceof String key)) return null;
 
-        return InfuseEffect.fromString(key);
+        return InfuseEffect.getEffect(Key.key("infuse", key));
     }
 
     @Override

@@ -1,5 +1,5 @@
 emerald:
-  enabled: true
+  type: shaped
   shape:
     - "WSW"
     - "OEO"
@@ -13,7 +13,7 @@ emerald:
     T: ENCHANTING_TABLE
 
 feather:
-  enabled: true
+  type: shaped
   shape:
     - "BPB"
     - "FHF"
@@ -25,7 +25,7 @@ feather:
     H: HEAVY_CORE
 
 fire:
-  enabled: true
+  type: shaped
   shape:
     - "URU"
     - "NPN"
@@ -36,8 +36,8 @@ fire:
     N: NETHERITE_INGOT
     P: MUSIC_DISC_PIGSTEP
 
-ender:
-  enabled: true
+aug_ender:
+  type: shaped
   shape:
     - "RAR"
     - "APA"
@@ -46,10 +46,20 @@ ender:
     R: DRAGON_HEAD
     A: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE
     P: DRAGON_EGG
-  egg_replacement: ENDER_EYE
+
+ender:
+  type: shaped
+  shape:
+    - "RAR"
+    - "AEA"
+    - "RAR"
+  ingredients:
+    R: DRAGON_HEAD
+    A: SPIRE_ARMOR_TRIM_SMITHING_TEMPLATE
+    E: ENDER_EYE
 
 frost:
-  enabled: true
+  type: shaped
   shape:
     - "TPT"
     - "HDH"
@@ -61,7 +71,7 @@ frost:
     D: MUSIC_DISC_CREATOR
 
 haste:
-  enabled: true
+  type: shaped
   shape:
     - "DBD"
     - "GEG"
@@ -74,7 +84,7 @@ haste:
     N: NETHERITE_PICKAXE
 
 heart:
-  enabled: true
+  type: shaped
   shape:
     - "PTP"
     - "EBE"
@@ -86,7 +96,7 @@ heart:
     B: BEETROOT
 
 invis:
-  enabled: true
+  type: shaped
   shape:
     - "EME"
     - "SOS"
@@ -99,7 +109,7 @@ invis:
     R: RECOVERY_COMPASS
 
 ocean:
-  enabled: true
+  type: shaped
   shape:
     - "EHE"
     - "TCT"
@@ -111,7 +121,7 @@ ocean:
     C: CONDUIT
 
 regen:
-  enabled: true
+  type: shaped
   shape:
     - "EHE"
     - "PAP"
@@ -124,7 +134,7 @@ regen:
     M: MUSIC_DISC_CREATOR_MUSIC_BOX
 
 speed:
-  enabled: true
+  type: shaped
   shape:
     - "RSR"
     - "DHE"
@@ -138,7 +148,7 @@ speed:
     N: NETHERITE_BOOTS
 
 strength:
-  enabled: true
+  type: shaped
   shape:
     - "PRP"
     - "SWA"
@@ -151,7 +161,7 @@ strength:
     A: NETHERITE_AXE
 
 thunder:
-  enabled: true
+  type: shaped
   shape:
     - "BLB"
     - "TCT"
@@ -163,7 +173,7 @@ thunder:
     C: CREEPER_HEAD
 
 apophis:
-  enabled: false
+  type: shaped
   shape:
     - "BLB"
     - "LCL"
@@ -174,7 +184,7 @@ apophis:
     C: NETHER_STAR
 
 thief:
-  enabled: false
+  type: shaped
   shape:
     - "BLB"
     - "CDC"

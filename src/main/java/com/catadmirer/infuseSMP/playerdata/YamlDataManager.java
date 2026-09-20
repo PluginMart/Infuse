@@ -2,6 +2,7 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import net.kyori.adventure.key.Key;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.InvalidConfigurationException;
@@ -65,24 +66,34 @@ public class YamlDataManager implements DataManager {
 
     @Override
     public int getExistingCount(InfuseEffect effect) {
-        return config.getInt("effects-crafted." + effect.getKey(), 0);
+        return config.getInt("effects-crafted." + effect.key(), 0);
     }
 
     @Override
     public void setExistingCount(InfuseEffect effect, int count) {
-        config.set("effects-crafted." + effect.getKey(), count);
+        config.set("effects-crafted." + effect.key(), count);
+    }
+
+    @Override
+    public Set<UUID> getTrusted(UUID player) {
+        return config.getStringList(player + ".trust").stream().map(UUID::fromString).collect(Collectors.toSet());
     }
 
     @Override
     public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
-        return config.getStringList(player.getUniqueId() + ".trust").stream().map(UUID::fromString).map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+        return getTrusted(player.getUniqueId()).stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+    }
+
+    @Override
+    public void setTrusted(UUID player, Set<UUID> trusted) {
+        config.set(player + ".trust", trusted.stream().map(UUID::toString).toList());
+
+        save();
     }
 
     @Override
     public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> allTrusted) {
-        config.set(player.getUniqueId() + ".trust", allTrusted.stream().map(OfflinePlayer::getUniqueId).toList());
-
-        save();
+        setTrusted(player.getUniqueId(), allTrusted.stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
     }
 
     @Override
@@ -96,7 +107,7 @@ public class YamlDataManager implements DataManager {
         if (effect == null) {
             config.set(player.getUniqueId() + "." + slot, null);
         } else {
-            config.set(player.getUniqueId() + "." + slot, effect.getKey());
+            config.set(player.getUniqueId() + "." + slot, effect.key());
         }
         save();
     }
@@ -105,8 +116,13 @@ public class YamlDataManager implements DataManager {
     @Override
     public InfuseEffect getEffect(OfflinePlayer player, String slot) {
         String effectKey = config.getString(player.getUniqueId() + "." + slot, null);
-        InfuseEffect effect = InfuseEffect.fromString(effectKey);
-        if (effectKey != null && effect == null) {
+        if (effectKey == null) {
+            Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
+            return null;
+        }
+
+        InfuseEffect effect = InfuseEffect.getEffect(Key.key(effectKey));
+        if (effect == null) {
             Infuse.LOGGER.warn("No valid ability found for the equipped effect.");
         }
 

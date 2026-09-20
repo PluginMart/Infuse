@@ -2,13 +2,16 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
+import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Abstract class that helps with handling data asynchronously.
@@ -34,6 +37,11 @@ public abstract class AsyncDataManager implements DataManager {
     }
 
     protected abstract void reallySetExistingCount(InfuseEffect effect, int count);
+
+    @Override
+    public void setTrusted(UUID player, Set<UUID> trusted) {
+        setTrusted(Bukkit.getOfflinePlayer(player), trusted.stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet()));
+    }
 
     @Override
     public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> trusted) {

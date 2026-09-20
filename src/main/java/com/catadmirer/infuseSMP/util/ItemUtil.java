@@ -3,7 +3,6 @@ package com.catadmirer.infuseSMP.util;
 import com.destroystokyo.paper.MaterialSetTag;
 import org.bukkit.NamespacedKey;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.entity.HumanEntity;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
@@ -38,34 +37,36 @@ public class ItemUtil {
         return MaterialSetTag.ITEMS_HOES.isTagged(item.getType());
     }
 
-    public static void giveOrDropItem(HumanEntity player, ItemStack... items) {
-        player.getInventory().addItem(items).forEach((i, extra) -> player.getWorld().dropItem(player.getLocation(), extra));
-    }
-
     public static void applySpecialEnchantment(ItemStack item, NamespacedKey key, Enchantment enchantment, int newLevel) {
         // Skipping if the key was already applied
         if (item.getPersistentDataContainer().has(key)) return;
 
-        // Skipping if the enchantment is already higher than the new level
-        if (item.getEnchantmentLevel(enchantment) >= newLevel) return;
+        int currentLevel = item.getEnchantmentLevel(enchantment);
 
-        item.editMeta(meta -> {
-            meta.getPersistentDataContainer().set(key, PersistentDataType.INTEGER, item.getEnchantmentLevel(enchantment));
-            meta.removeEnchant(enchantment);
-            meta.addEnchant(enchantment, newLevel, true);
-        });
+        // Skipping if the enchantment is already higher than the new level
+        if (currentLevel >= newLevel) return;
+
+        // Storing the current level for later
+        item.editPersistentDataContainer(c -> c.set(key, PersistentDataType.INTEGER, currentLevel));
+
+        // Removing the old enchantment and applying the new one
+        item.removeEnchantment(enchantment);
+        item.addUnsafeEnchantment(enchantment, newLevel);
     }
 
     public static void removeSpecialEnchant(ItemStack item, NamespacedKey key, Enchantment enchantment) {
         // Skipping if the item doesn't have the key
         if (!item.getPersistentDataContainer().has(key)) return;
 
-        item.editMeta(meta -> {
-            int oldLevel = meta.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
-            meta.getPersistentDataContainer().remove(key);
+        // Getting the old level from pdc.
+        //noinspection DataFlowIssue
+        int oldLevel = item.getPersistentDataContainer().get(key, PersistentDataType.INTEGER);
 
-            meta.removeEnchant(enchantment);
-            meta.addEnchant(enchantment, oldLevel, true);
-        });
+        // Removing the old level from pdc
+        item.editPersistentDataContainer(c -> c.remove(key));
+
+        item.removeEnchantment(enchantment);
+        if (oldLevel == 0) return;
+        item.addEnchantment(enchantment, oldLevel);
     }
 }

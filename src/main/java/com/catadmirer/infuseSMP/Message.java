@@ -1,6 +1,8 @@
 package com.catadmirer.infuseSMP;
 
 import java.util.stream.Stream;
+
+import io.papermc.paper.command.brigadier.MessageComponentSerializer;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import net.kyori.adventure.text.minimessage.tag.TagPattern;
@@ -11,6 +13,7 @@ import java.util.List;
 public class Message {
     // Text serializers
     public static final MiniMessage mm = MiniMessage.miniMessage();
+    public static final MessageComponentSerializer mcs = MessageComponentSerializer.message();
 
     private static final MessageTranslator translator = new MessageTranslator();
 
@@ -103,6 +106,7 @@ public class Message {
         CONTROLS_INVALID_PARAM,
         INFUSE_INVALID_PARAM,
         INFUSE_INVALID_SLOT("slot"),
+        INFUSE_HELP,
         INFUSE_CONTROLS_USAGE,
         INFUSE_CONTROLS_SUCCESS("control_mode"),
         INFUSE_SETEFFECT_USAGE,
@@ -113,7 +117,7 @@ public class Message {
         INFUSE_CLEAREFFECTS_SUCCESS("player_name"),
         INFUSE_COOLDOWN_USAGE,
         INFUSE_COOLDOWN_SUCCESS("player_name"),
-        JOIN_ABILITY_NOTIFY("control_mode"),
+        CONTROL_MODE_NOTIFY("control_mode"),
         DRAIN_SUCCESS("effect_name"),
         DRAIN_CANCELLED,
         EFFECT_EQUIPPED("effect_name"),
@@ -128,6 +132,7 @@ public class Message {
         ERROR_INVALID_COMMAND,
         ERROR_RITUAL_ACTIVE,
         ERROR_TARGET_NOT_FOUND,
+        RITUAL_INTERRUPTED("effect_name"),
 
         // Effect messages
         EMERALD_NAME,
@@ -195,7 +200,7 @@ public class Message {
 
         public final List<String> placeholders;
 
-        private MessageType(String... placeholders) {
+        MessageType(String... placeholders) {
             this.placeholders = List.of(placeholders);
         }
     }

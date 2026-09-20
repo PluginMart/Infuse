@@ -1,4 +1,4 @@
-package com.catadmirer.infuseSMP.placeholders;
+package com.catadmirer.infuseSMP.expansions;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
@@ -18,49 +18,35 @@ public class InfusePlaceholders extends PlaceholderExpansion {
         this.plugin = plugin;
     }
 
-    @NonNull
     @Override
-    public String getAuthor() {
+    public @NonNull String getAuthor() {
         return "catadmirer";
     }
 
-    @NonNull
     @Override
-    public String getIdentifier() {
+    public @NonNull String getIdentifier() {
         return "infuse";
     }
 
-    @NonNull
     @Override
-    public String getVersion() {
-        return plugin.getPluginMeta().getVersion();
+    public @NonNull String getVersion() {
+        return plugin.getVersion();
     }
 
     @Override
     public String onRequest(OfflinePlayer player, @NotNull String params) {
+        UUID uuid = player.getUniqueId();
+
         return switch (params.toLowerCase()) {
-            case "first_effect" -> getEffectIcon(player, "1");
-            case "second_effect" -> getEffectIcon(player, "2");
             case "first_time" -> getTime(player, "1");
             case "second_time" -> getTime(player, "2");
             case "first_effect_raw" -> getEffectRaw(player, "1");
             case "second_effect_raw" -> getEffectRaw(player, "2");
             case "first_effect_name" -> getEffectName(player, "1");
             case "second_effect_name" -> getEffectName(player, "2");
+            case "controls" -> plugin.getDataManager().getControlMode(player);
             default -> null;
         };
-    }
-
-    public String getEffectIcon(OfflinePlayer player, String slot) {
-        UUID uuid = player.getUniqueId();
-
-        InfuseEffect effect = plugin.getDataManager().getEffect(player, slot);
-
-        if (effect == null) {
-            return plugin.getMainConfig().emptyEffectIcon() ? "\uE901" : "";
-        }
-
-        return "" + (CooldownManager.isEffectActive(uuid, effect.getPlainKey()) ? effect.getActiveIcon() : effect.getIcon());
     }
 
     public String getTime(OfflinePlayer player, String slot) {

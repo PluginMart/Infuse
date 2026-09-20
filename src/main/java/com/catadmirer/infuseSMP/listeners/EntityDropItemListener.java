@@ -21,7 +21,7 @@ public class EntityDropItemListener implements Listener {
     public void onDrop(EntityDropItemEvent event) {
         final Item droppedItem = event.getItemDrop();
         ItemStack itemStack = droppedItem.getItemStack();
-        InfuseEffect effect = InfuseEffect.fromItem(itemStack);
+        InfuseEffect effect = InfuseEffect.getEffect(itemStack);
         if (effect == null) return;
         ParticleManager.dropEffect(plugin, false, effect, droppedItem.getLocation());
         droppedItem.setGlowing(true);

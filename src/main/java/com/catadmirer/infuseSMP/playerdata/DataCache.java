@@ -2,7 +2,7 @@ package com.catadmirer.infuseSMP.playerdata;
 
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
-import org.bukkit.Bukkit;
+import net.kyori.adventure.key.Key;
 import org.bukkit.OfflinePlayer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jspecify.annotations.NullMarked;
@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * This class is a non-persistent implementation of a {@link DataManager}.<br>
@@ -24,10 +23,10 @@ import java.util.stream.Collectors;
 @NullMarked
 public class DataCache implements DataManager {
     public final Map<UUID,Set<UUID>> allTrusts = new HashMap<>();
-    public final Map<UUID,@Nullable Integer> leftEffects = new HashMap<>();
-    public final Map<UUID,@Nullable Integer> rightEffects = new HashMap<>();
+    public final Map<UUID,@Nullable Key> leftEffects = new HashMap<>();
+    public final Map<UUID,@Nullable Key> rightEffects = new HashMap<>();
     public final Map<UUID,Boolean> controlModes = new HashMap<>();
-    public final Map<Integer,Integer> craftedCounts = new HashMap<>();
+    public final Map<Key,Integer> craftedCounts = new HashMap<>();
 
     @Override
     public void load() {
@@ -36,27 +35,27 @@ public class DataCache implements DataManager {
 
     @Override
     public int getExistingCount(InfuseEffect effect) {
-        return craftedCounts.getOrDefault(effect.serialize(), 0);
+        return craftedCounts.getOrDefault(effect.key(), 0);
     }
 
     @Override
     public void setExistingCount(InfuseEffect effect, int count) {
-        craftedCounts.put(effect.serialize(), count);
+        craftedCounts.put(effect.key(), count);
     }
 
     @Override
-    public Set<OfflinePlayer> getTrusted(OfflinePlayer player) {
-        return allTrusts.getOrDefault(player.getUniqueId(), Set.of()).stream().map(Bukkit::getOfflinePlayer).collect(Collectors.toSet());
+    public Set<UUID> getTrusted(UUID player) {
+        return allTrusts.getOrDefault(player, Set.of());
     }
 
     @Override
-    public void setTrusted(OfflinePlayer player, Set<OfflinePlayer> trusted) {
-        allTrusts.put(player.getUniqueId(), trusted.stream().map(OfflinePlayer::getUniqueId).collect(Collectors.toSet()));
+    public void setTrusted(UUID player, Set<UUID> trusted) {
+        allTrusts.put(player, trusted);
     }
 
     @Override
     public void setEffect(OfflinePlayer player, String slot, @Nullable InfuseEffect effect) {
-        Integer val = effect == null ? null : effect.serialize();
+        Key val = effect == null ? null : effect.key();
         if (slot.equals("1")) {
             leftEffects.put(player.getUniqueId(), val);
         } else if (slot.equals("2")) {
@@ -70,13 +69,13 @@ public class DataCache implements DataManager {
     @Override
     public InfuseEffect getEffect(OfflinePlayer player, String slot) {
         if (slot.equals("1")) {
-            Integer serialized = leftEffects.get(player.getUniqueId());
-            if (serialized == null) return null;
-            return InfuseEffect.deserialize(serialized);
+            Key key = leftEffects.get(player.getUniqueId());
+            if (key == null) return null;
+            return InfuseEffect.getEffect(key);
         } else if (slot.equals("2")) {
-            Integer serialized = rightEffects.get(player.getUniqueId());
-            if (serialized == null) return null;
-            return InfuseEffect.deserialize(serialized);
+            Key key = rightEffects.get(player.getUniqueId());
+            if (key == null) return null;
+            return InfuseEffect.getEffect(key);
         } else {
             Infuse.LOGGER.warn("Slot '{}' is not a valid slot.  Please use \"1\" or \"2\"", slot);
         }

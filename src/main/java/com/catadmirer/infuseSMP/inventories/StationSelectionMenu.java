@@ -21,7 +21,7 @@ public class StationSelectionMenu implements InventoryHolder {
         this.standLocation = standLocation;
 
         // Filling the inventory with a filler item.
-        InventoryUtils.fillInventory(inventory, InventoryUtils.createNoName(Material.GRAY_STAINED_GLASS_PANE));
+        InventoryUtils.fillInventory(inventory, InventoryUtils.createNoTooltip(Material.GRAY_STAINED_GLASS_PANE));
 
         // Creating the crafting table option
         ItemStack craftingTable = new ItemStack(Material.CRAFTING_TABLE);

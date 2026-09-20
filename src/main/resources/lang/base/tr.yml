@@ -55,7 +55,7 @@ infuse_cooldown_success: "<green>%player_name% oyuncusunun bekleme süresi kald�
 
 cleareffects_usage: "<red>Kullanım: /infuse clearEffects <oyuncu>"
 
-join_ability_notify: "<gray>Yetenek modunuz şu an: %control_mode%"
+control_mode_notify: "<gray>Yetenek modunuz şu an: %control_mode%"
 
 drain_success: "<green>%effect_name% efektinizi boşalttınız"
 

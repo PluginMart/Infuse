@@ -1,6 +1,6 @@
 package com.catadmirer.infuseSMP.managers;
 
-import com.catadmirer.infuseSMP.EffectIds;
+import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.effects.Ender;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
@@ -13,15 +13,15 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jspecify.annotations.Nullable;
 
 public class ParticleManager {
-    public static void spawnEffectParticles(Player player, InfuseEffect effect) {
-        if (effect == null)
-            return;
+    public static void spawnEffectParticles(Player player, @Nullable InfuseEffect effect) {
+        if (effect == null) return;
 
         // Handling special particles for ender effect
         // TODO: Decide whether or not to keep this
-        if (effect.getId() == EffectIds.ENDER) {
+        if (effect.getId() == EffectConstants.Id.ENDER) {
             player.getWorld().spawnParticle(Particle.REVERSE_PORTAL, player.getLocation().add(0, 1, 0), 32, 0.3, 0.5,
                     0.3, 0);
             return;
@@ -79,7 +79,7 @@ public class ParticleManager {
     public static void dropEffect(Infuse plugin, boolean bottomToTop, @NotNull InfuseEffect effect, Location location) {
         final Location base = location.add(0, bottomToTop ? 0 : 2, 0);
         final World world = location.getWorld();
-        Color color = Color.fromRGB(effect.getPotionColor().getRGB() & 0xFFFFFF);
+        Color color = Color.fromARGB(effect.getPotionColor().getRGB());
         final Particle.DustOptions dust = new Particle.DustOptions(color, 0.7F);
         final int points = 16;
         final double radius = 0.6;

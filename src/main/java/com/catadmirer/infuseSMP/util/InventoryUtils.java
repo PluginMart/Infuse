@@ -14,7 +14,8 @@ public class InventoryUtils {
      *
      * @return A decorative item with no name.
      */
-    public static ItemStack createNoName(Material material) {
+    @SuppressWarnings("UnstableApiUsage")
+    public static ItemStack createNoTooltip(Material material) {
         ItemStack pane = new ItemStack(material);
         pane.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true));
         return pane;
@@ -50,7 +51,7 @@ public class InventoryUtils {
      * @param inventory The inventory to fill with panes.
      */
     public static void fillRemainingSlots(Inventory inventory) {
-        ItemStack stainedGlassPane = createNoName(Material.RED_STAINED_GLASS_PANE);
+        ItemStack stainedGlassPane = createNoTooltip(Material.RED_STAINED_GLASS_PANE);
 
         for (int i = 0; i < inventory.getSize(); i++) {
             if (inventory.getItem(i) == null) {
@@ -67,7 +68,7 @@ public class InventoryUtils {
     public static void lockInventory(Inventory inventory) {
         for (ItemStack item : inventory.getContents()) {
             if (item == null) continue;
-            item.editMeta(meta -> meta.setMaxStackSize(1));
+            item.setData(DataComponentTypes.MAX_STACK_SIZE, 1);
         }
     }
 }

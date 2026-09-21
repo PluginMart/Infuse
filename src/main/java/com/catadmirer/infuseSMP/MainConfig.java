@@ -60,6 +60,21 @@ public class MainConfig {
     }
 
     /**
+     * Writes the config to the file (without the success message).
+     */
+    public void saveSilently() {
+        // Creating the file if it doesn't exist.
+        createFile();
+
+        // Saving the config
+        try {
+            config.save(file);
+        } catch (IOException e) {
+            Infuse.LOGGER.warn("Could not save {} silently.  Make sure the user has write permissions.", file.getName());
+        }
+    }
+
+    /**
      * Creates the default config file.<br>
      * Does not override any existing config.
      */
@@ -220,6 +235,11 @@ public class MainConfig {
             newMainConfig.save();
             load();
         }
+
+        if (!config.contains("ocean.spark.drown_radius")) config.set("ocean.spark.drown_radius", 5);
+        if (!config.contains("ocean.spark.drown_interval")) config.set("ocean.spark.drown_interval", 1);
+
+        saveSilently();
     }
 
     //
@@ -503,6 +523,14 @@ public class MainConfig {
 
     public int oceanSparkDrownStrength() {
         return config.getInt("ocean.spark.drown_strength", 20);
+    }
+
+    public long oceanSparkDrownInterval() {
+        return config.getLong("ocean.spark.drown_interval", 1);
+    }
+
+    public double oceanSparkDrownRadius() {
+        return config.getDouble("ocean.spark.drown_radius", 5);
     }
 
     public int oceanSparkDrownDamage() {

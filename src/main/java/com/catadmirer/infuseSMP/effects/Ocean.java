@@ -4,22 +4,24 @@ import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 
+import java.util.ArrayList;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 public class Ocean extends InfuseEffect {
+
     public Ocean() {
         this(false);
     }
+
+    private static final ArrayList<UUID> oceanTasks = new ArrayList<>();
 
     public Ocean(boolean augmented) {
         super("ocean", EffectConstants.Id.OCEAN, augmented, EffectConstants.PotionColor.OCEAN, EffectConstants.RitualColor.OCEAN, EffectConstants.BackgroundColor.OCEAN);
@@ -41,28 +43,45 @@ public class Ocean extends InfuseEffect {
 
     @Override
     public void applyPassives(Player owner) {
-        // Boosting the strength and damage of the passive drowning if the spark is active
-        if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+        // Checking if the owner of the effect already has the task
+        if (oceanTasks.contains(owner.getUniqueId())) return;
+        oceanTasks.add(owner.getUniqueId());
 
-        int drownStrength = plugin.getMainConfig().oceanPassiveDrownStrength();
-        int drownDamage = plugin.getMainConfig().oceanPassiveDrownDamage();
-        if (CooldownManager.isEffectActive(owner.getUniqueId(), "ocean"))  {
-            drownStrength = plugin.getMainConfig().oceanSparkDrownStrength();
-            drownDamage = plugin.getMainConfig().oceanSparkDrownDamage();
-        }
-
-        // TODO: Make this use packets for air bubbles
-        for (Player otherPlayer : owner.getWorld().getPlayers()) {
-            if (otherPlayer.equals(owner)) continue;
-            if (plugin.getRegionBlocker().isEffectBlocked(otherPlayer, this)) continue;
-            if (otherPlayer.getLocation().distance(owner.getLocation()) > 5) continue;
-
-            int newAir = Math.max(otherPlayer.getRemainingAir() - drownStrength, -20);
-            otherPlayer.setRemainingAir(newAir);
-            if (newAir <= 0) {
-                otherPlayer.damage(drownDamage);
+        Bukkit.getAsyncScheduler().runAtFixedRate(plugin, task -> {
+            if (!(owner.isOnline()) || !(plugin.getDataManager().hasEffect(owner, this))) {
+                oceanTasks.remove(owner.getUniqueId());
+                task.cancel();
+                return;
             }
-        }
+
+            if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
+
+            // Boosting the strength and damage of the passive drowning if the spark is active
+            int drownStrength = plugin.getMainConfig().oceanPassiveDrownStrength();
+            int drownDamage = plugin.getMainConfig().oceanPassiveDrownDamage();
+            if (CooldownManager.isEffectActive(owner.getUniqueId(), "ocean"))  {
+                drownStrength = plugin.getMainConfig().oceanSparkDrownStrength();
+                drownDamage = plugin.getMainConfig().oceanSparkDrownDamage();
+            }
+
+            final int drownStrengthFinal = drownStrength;
+            final int drownDamageFinal = drownDamage;
+            final double drownRadius = plugin.getMainConfig().oceanSparkDrownRadius();
+
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                for (Player otherPlayer : owner.getWorld().getPlayers()) {
+                    if (otherPlayer.equals(owner)) continue;
+                    if (plugin.getRegionBlocker().isEffectBlocked(otherPlayer, this)) continue;
+                    if (otherPlayer.getLocation().distance(owner.getLocation()) > drownRadius) continue;
+
+                    int newAir = Math.max(otherPlayer.getRemainingAir() - drownStrengthFinal, -20);
+                    otherPlayer.setRemainingAir(newAir);
+                    if (newAir <= 0) otherPlayer.damage(drownDamageFinal);
+                }
+            });
+
+        }, 0L, plugin.getMainConfig().oceanSparkDrownInterval() * 50L, TimeUnit.MILLISECONDS);
+
     }
 
     @Override

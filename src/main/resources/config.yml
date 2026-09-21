@@ -220,6 +220,8 @@ ocean:
   spark:
     drown_strength: 20
     drown_damage: 2
+    drown_radius: 5
+    drown_interval: 1 # In Ticks (20 ticks = 1 second), If this is over a second this may not work.
     pull_interval: 20 # In ticks (20 ticks = 1 second)
     pull_radius: 5
     pull_strength: 0.3

@@ -33,7 +33,7 @@ public class EffectCraftManager implements Listener {
     @EventHandler
     public void onCraft(CraftItemEvent event) {
         // Safe to assume the crafted item is the correct augmented/regular form due to the PrepareItemCraftEvent Listener
-        final ItemStack craftedItem = event.getInventory().getResult();
+        final ItemStack craftedItem = event.getRecipe().getResult();
         final InfuseEffect effect = InfuseEffect.getEffect(craftedItem);
         final HumanEntity player = event.getWhoClicked();
         // Making sure the item being crafted is an Infuse effect
@@ -68,19 +68,28 @@ public class EffectCraftManager implements Listener {
             // Updating the recipe if needed
             // Recipes are only updated when infinite effects aren't used.
             if (numCrafted + 1 == craftLimit) {
-                Bukkit.removeRecipe(plugin.getRecipeManager().getRecipeKey(effect));
+                Bukkit.removeRecipe(RecipeManager.getRecipeKey(effect));
                 Bukkit.addRecipe(plugin.getRecipeManager().getRecipe(effect.getRegularVersion()));
             }
         }
 
-        // Incrementing the number of effects crafted.
-        plugin.getDataManager().setExistingCount(effect, numCrafted + 1);
-        
-        // If the effect is not augmented, just craft it
-        if (!effect.isAugmented())  {
-            // Calling the EffectCraftEvent
-            new EffectCraftEvent(player, effect).callEvent();
+        // Handling augmented effects
+        if (effect.isAugmented()) {
+            // Preventing augmented effects from being crafted during rituals
+            if (plugin.getRitualManager().isActive()) {
+                event.setCancelled(true);
+                return;
+            }
 
+            // Starting the ritual
+            plugin.getRitualManager().startRitual(player, effect, brewerLocation);
+
+            // Delaying giving the item to when the ritual ends
+            event.setCurrentItem(null);
+
+            // Closing the inventory
+            player.closeInventory();
+        } else {
             // Announcing the effect being crafted if the config is enabled
             if (!plugin.getMainConfig().regularBroadcast()) return;
 
@@ -101,29 +110,13 @@ public class EffectCraftManager implements Listener {
             formattedMessage.applyPlaceholder("dimension", worldName);
 
             Bukkit.broadcast(formattedMessage.toComponent());
-            return;
         }
-
-        // Making sure no rituals were active.
-        if (plugin.getRitualManager().isActive()) {
-            event.setCancelled(true);
-            return;
-        }
-
-        // Starting the ritual
-        plugin.getRitualManager().startRitual(player, effect, brewerLocation);
 
         // Calling the EffectCraftEvent
         new EffectCraftEvent(player, effect).callEvent();
 
-        // Removing the ingredients
-        event.getInventory().forEach(item -> item.subtract(1));
-
-        // Closing the inventory
-        player.closeInventory();
-
-        // Cancelling the event
-        event.setCancelled(true);
+        // Incrementing the number of effects crafted.
+        plugin.getDataManager().setExistingCount(effect, numCrafted + 1);
     }
 
     public static final Component effectCraftingMenu = Component.text("Effect Crafting");

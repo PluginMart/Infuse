@@ -7,9 +7,10 @@ import com.catadmirer.infuseSMP.managers.CooldownManager;
 import com.catadmirer.infuseSMP.util.ItemUtil;
 
 import org.bukkit.Material;
-import org.bukkit.Particle;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.craftbukkit.entity.CraftEntity;
+import org.bukkit.craftbukkit.entity.CraftPlayer;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
@@ -90,12 +91,13 @@ public class Strength extends InfuseEffect {
         // Spark auto-crit
         if (!event.isCritical() && CooldownManager.isEffectActive(attacker.getUniqueId(), "strength") && !plugin.getRegionBlocker().isEffectBlocked(event.getEntity(), this)) {
             // crit dmg boost
-            damage *= 1.35;
+            damage *= 1.5;
 
             // Playing the crit noise and spawning crit particles.
             Entity hitEntity = event.getEntity();
             hitEntity.getWorld().playSound(hitEntity.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1, 1);
-            hitEntity.getWorld().spawnParticle(Particle.CRIT, hitEntity.getLocation().add(0, hitEntity.getHeight() / 2, 0), 10);
+            // nms crit particles
+            ((CraftPlayer)attacker).getHandle().crit(((CraftEntity)hitEntity).getHandle());
         }
 
         // non-player target double dmg

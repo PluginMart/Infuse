@@ -87,6 +87,8 @@ public class Infuse extends JavaPlugin {
             regionBlocker = new BasicRegionBlocker();
             LOGGER.info("WorldGuard is not installed! Using blacklisted-worlds configs");
         }
+
+        regionBlocker.init();
     }
 
     public void onEnable() {

@@ -273,7 +273,7 @@ thunder:
   blacklisted_worlds: []
 
 apophis:
-  enabled: false
+  enabled: true
   cooldown:
     default: 125
     augmented: 75
@@ -295,7 +295,7 @@ apophis:
   blacklisted_worlds: []
 
 thief:
-  enabled: false
+  enabled: true
   duration: 
     default: 10
     augmented: 10

@@ -130,9 +130,9 @@ public class Thunder extends InfuseEffect {
      * @param target The entity to hit with a lightning bolt.
      * @param attacker The entity to attribute the damage to.
      */
-    public static void strikeLighting(LivingEntity target, LivingEntity attacker) {
+    public void strikeLighting(LivingEntity target, LivingEntity attacker) {
         target.getWorld().strikeLightningEffect(target.getLocation());
-        target.damage(2, DamageSource.builder(DamageType.LIGHTNING_BOLT).withDirectEntity(attacker).build());
+        target.damage(plugin.getMainConfig().thunderThunderDamage(), DamageSource.builder(DamageType.LIGHTNING_BOLT).withDirectEntity(attacker).build());
         target.getWorld().spawnParticle(Particle.DUST, target.getLocation().add(0, 1, 0), 10, 0.5, 0.5, 0.5, 0, new DustOptions(Color.YELLOW, 1.5F));
     }
 

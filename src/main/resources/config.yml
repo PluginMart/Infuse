@@ -270,6 +270,7 @@ thunder:
     base_radius: 10
     per_player_boost_radius: 0.3
     strikes_per_player: 3
+  thunder_damage: 2
   blacklisted_worlds: []
 
 apophis:

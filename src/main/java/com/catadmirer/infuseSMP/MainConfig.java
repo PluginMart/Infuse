@@ -239,6 +239,8 @@ public class MainConfig {
         if (!config.contains("ocean.spark.drown_radius")) config.set("ocean.spark.drown_radius", 5);
         if (!config.contains("ocean.spark.drown_interval")) config.set("ocean.spark.drown_interval", 1);
 
+        if (!config.contains("thunder.thunder_damage")) config.set("thunder.thunder_damage", 2);
+
         saveSilently();
     }
 
@@ -577,6 +579,10 @@ public class MainConfig {
 
     public int thunderSparkStrikesPerPlayer() {
         return config.getInt("thunder.spark.strikes_per_player", 3);
+    }
+
+    public double thunderThunderDamage() {
+        return config.getDouble("thunder.thunder_damage", 2);
     }
 
     //

@@ -150,11 +150,10 @@ public class Thunder extends InfuseEffect {
         if (targets.size() == 11) return;
         if (targets.isEmpty()) throw new InvalidParameterException("targets list needs to have the attacker in the front");
 
-        Player attacker = targets.getFirst();
+        final Player attacker = targets.getFirst();
         if (plugin.getRegionBlocker().isEffectBlocked(attacker, this)) return;
 
-        // TODO: make config
-        double radius = 3;
+        final double radius = plugin.getMainConfig().thunderPassiveChainLightningRadius();
 
         // Finding the next target.
         for (Entity entity : targets.getLast().getNearbyEntities(radius, radius, radius)) {

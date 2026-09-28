@@ -266,6 +266,8 @@ thunder:
   duration:
     default: 10
     augmented: 10
+  passive:
+    chain_lightning_radius: 3
   spark:
     base_radius: 10
     per_player_boost_radius: 0.3

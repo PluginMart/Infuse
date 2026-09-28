@@ -28,6 +28,7 @@ import org.bukkit.scheduler.BukkitRunnable;
 import java.util.UUID;
 
 public class Heart extends InfuseEffect {
+
     public static final NamespacedKey heartBoost = new NamespacedKey("infuse", "heart_boost");
     public static final NamespacedKey heartSparkBoost = new NamespacedKey("infuse", "heart_spark_boost");
 

@@ -240,6 +240,7 @@ public class MainConfig {
         if (!config.contains("ocean.spark.drown_interval")) config.set("ocean.spark.drown_interval", 1);
 
         if (!config.contains("thunder.thunder_damage")) config.set("thunder.thunder_damage", 2);
+        if (!config.contains("thunder.passive.chain_lightning_radius")) config.set("thunder.passive.chain_lightning_radius", 3);
 
         saveSilently();
     }
@@ -583,6 +584,10 @@ public class MainConfig {
 
     public double thunderThunderDamage() {
         return config.getDouble("thunder.thunder_damage", 2);
+    }
+
+    public double thunderPassiveChainLightningRadius() {
+        return config.getDouble("thunder.passive.chain_lightning_radius", 3);
     }
 
     //

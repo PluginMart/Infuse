@@ -177,10 +177,15 @@ public class Frost extends InfuseEffect {
                             return;
                         }
 
+                        // Canceling task if the player has broke the snow block when it has been changed
+                        if (!(powderSnowBlock.getType().equals(Material.SNOW_BLOCK))) {
+                            frozenSnow.remove(powderSnowBlock.getLocation());
+                            task.cancel();
+                            return;
+                        }
+
                         // Skipping if the player is too close to the block
                         if (powderSnowBlock.getLocation().distance(player.getLocation()) <= frostSnowRadius) return;
-                        // Skipping if the player has broke the snow block when it has been changed
-                        if (!(powderSnowBlock.getType().equals(Material.SNOW_BLOCK))) return;
 
                         // Resetting the block to powdered snow
                         powderSnowBlock.setType(Material.POWDER_SNOW);

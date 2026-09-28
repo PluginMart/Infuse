@@ -169,6 +169,14 @@ public class Frost extends InfuseEffect {
                     frozenSnow.add(powderSnowBlock.getLocation());
 
                     Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+                        // Checking if player's world is different, if so set it back.
+                        if (!(powderSnowBlock.getLocation().getWorld().equals(player.getLocation().getWorld()))) {
+                            powderSnowBlock.setType(Material.POWDER_SNOW);
+                            frozenSnow.remove(powderSnowBlock.getLocation());
+                            task.cancel();
+                            return;
+                        }
+
                         // Skipping if the player is too close to the block
                         if (powderSnowBlock.getLocation().distance(player.getLocation()) <= frostSnowRadius) return;
                         // Skipping if the player has broke the snow block when it has been changed
@@ -208,6 +216,7 @@ public class Frost extends InfuseEffect {
     @EventHandler
     public void onMove(PlayerMoveEvent event) {
         Player player = event.getPlayer();
+
         if (!plugin.getDataManager().hasEffect(player, this)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(player, this)) return;
 

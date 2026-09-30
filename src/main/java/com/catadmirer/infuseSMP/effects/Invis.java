@@ -62,7 +62,7 @@ public class Invis extends InfuseEffect {
         if (!plugin.getRegionBlocker().canUseSpark(owner)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
-        owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
+        owner.playSound(owner.getLocation(), Sound.ENTITY_WITHER_SHOOT, 1, 1);
 
         // Applying cooldowns and durations for the effect
         long cooldown = plugin.getMainConfig().cooldown(this);
@@ -134,6 +134,7 @@ public class Invis extends InfuseEffect {
                         if (plugin.getRegionBlocker().isEffectBlocked(plr, Invis.this)) continue;
 
                         plr.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false));
+                        plr.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 11, 0, false, false, false));
                     }
 
                     this.ticksElapsed += 10L;

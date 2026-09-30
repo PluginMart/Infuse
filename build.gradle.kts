@@ -15,11 +15,14 @@ repositories {
     maven("https://repo.extendedclip.com/content/repositories/placeholderapi/")
     maven("https://maven.enginehub.org/repo/")
     maven("https://jitpack.io")
+    maven("https://repo.codemc.io/repository/maven-releases/")
+    maven("https://repo.codemc.io/repository/maven-snapshots/")
 }
 
 dependencies {
     compileOnly(libs.placeholderapi)
     compileOnly(libs.worldguard)
+    compileOnly(libs.packetevents)
     compileOnly(libs.betterteams)
     compileOnly(libs.guava)
     compileOnly(libs.gson)

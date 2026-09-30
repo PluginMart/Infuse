@@ -1,18 +1,17 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
+import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitsGivenEvent;
+import com.catadmirer.infuseSMP.expansions.ExpansionHelper;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
+import com.catadmirer.infuseSMP.util.PacketEventsUtil;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Particle;
-import org.bukkit.Sound;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.Particle.DustOptions;
 import org.bukkit.entity.Arrow;
 import org.bukkit.entity.Entity;
@@ -22,16 +21,19 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class Invis extends InfuseEffect {
+
     public static final MiniMessage mm = MiniMessage.miniMessage();
+    private static final List<Player> vanished = new ArrayList<>();
 
     public Invis() {
         this(false);
@@ -73,22 +75,27 @@ public class Invis extends InfuseEffect {
         final World world = owner.getWorld();
         final Set<Player> vanishedPlayers = new HashSet<>();
 
-        for (Player player : world.getPlayers()) {
-            if (player.getLocation().distance(owner.getLocation()) > radius) continue;
+        for (Entity entity : owner.getNearbyEntities(radius, radius, radius)) {
+            if (!(entity instanceof final Player player)) continue;
             if (!plugin.getTrustManager().doesTrust(owner, player)) continue;
             if (plugin.getRegionBlocker().isEffectBlocked(player, this)) continue;
 
             vanishedPlayers.add(player);
+            vanished.add(player);
         }
+
+        vanishedPlayers.add(owner);
 
         for (Player vanished : vanishedPlayers) {
             if (plugin.getRegionBlocker().isEffectBlocked(vanished, this)) continue;
 
-            for (Player other : Bukkit.getOnlinePlayers()) {
-                if (other.equals(vanished)) continue;
-                if (plugin.getTrustManager().doesTrust(vanished, other)) continue;
-                other.hidePlayer(plugin, vanished);
-            }
+//            for (Entity other : vanished.getNearbyEntities(radius, radius, radius)) {
+//                if (!(other instanceof final Player plr)) continue;
+//                if (!(plugin.getTrustManager().doesTrust(vanished, plr))) continue;
+//
+//            }
+
+            if (ExpansionHelper.canUsePacketEvents()) PacketEventsUtil.hideArmor(vanished);
         }
 
         (new BukkitRunnable() {
@@ -97,20 +104,20 @@ public class Invis extends InfuseEffect {
             public void run() {
                 if (this.ticksElapsed >= durationTicks) {
                     this.cancel();
-                    for (Player vanished : vanishedPlayers) {
-                        for (Player other : Bukkit.getOnlinePlayers()) {
-                            other.showPlayer(plugin, vanished);
-                        }
+
+                    for (Player vanishedPlayer : vanishedPlayers) {
+                        vanished.remove(vanishedPlayer);
+                        if (ExpansionHelper.canUsePacketEvents()) PacketEventsUtil.showArmor(vanishedPlayer);
                     }
 
                 } else {
-                    Location center = owner.getLocation();
+                    final Location center = owner.getLocation();
 
                     for(int angle = 0; angle < 360; angle += 2) {
                         double rad = Math.toRadians(angle);
                         double baseX = center.getX() + radius * Math.cos(rad);
                         double baseZ = center.getZ() + radius * Math.sin(rad);
-                        DustOptions dustOptions = new DustOptions(Color.BLACK, 4);
+                        final DustOptions dustOptions = new DustOptions(Color.BLACK, 4);
 
                         for(int i = 0; i < 1; ++i) {
                             double offsetX = (Math.random() - 0.5) * 0.3;
@@ -120,19 +127,23 @@ public class Invis extends InfuseEffect {
                         }
                     }
 
-                    for (Player p : world.getPlayers()) {
-                        if (p.getLocation().distance(center) > radius) continue;
-                        if (plugin.getTrustManager().doesTrust(owner, p)) continue;
-                        if (!plugin.getRegionBlocker().canBeTargetedBySpark(p)) continue;
-                        if (plugin.getRegionBlocker().isEffectBlocked(p, Invis.this)) continue;
+                    for (Entity other : owner.getNearbyEntities(radius, radius, radius)) {
+                        if (!(other instanceof final Player plr)) continue;
+                        if (plugin.getTrustManager().doesTrust(owner, plr)) continue;
+                        if (!plugin.getRegionBlocker().canBeTargetedBySpark(plr)) continue;
+                        if (plugin.getRegionBlocker().isEffectBlocked(plr, Invis.this)) continue;
 
-                        p.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false));
+                        plr.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false));
                     }
 
                     this.ticksElapsed += 10L;
                 }
             }
         }).runTaskTimer(plugin, 0L, 10L);
+    }
+
+    public static List<Player> getVanishedPlayers() {
+        return vanished;
     }
 
     @Override
@@ -218,22 +229,25 @@ public class Invis extends InfuseEffect {
 
     @EventHandler
     public void onTenHits(TenHitsGivenEvent event) {
-        Player attacker = event.getPlayer();
+        final Player attacker = event.getPlayer();
         if (!plugin.getDataManager().hasEffect(attacker, this)) return;
         if (plugin.getRegionBlocker().isEffectBlocked(attacker, this)) return;
 
-        LivingEntity target = event.getLastTarget();
+        final LivingEntity target = event.getLastTarget();
         if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
+
         target.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 80, 0, false, false));
         this.spawnBlackParticles(target, 4);
     }
 
-    @EventHandler
-    public void onEntityTarget(EntityTargetEvent event) {
-        if (!(event.getTarget() instanceof Player target)) return;
-        if (!plugin.getDataManager().hasEffect(target, this)) return;
-        if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
+    // TODO: Keep incase im wrong about invis people being able to be damaged
+//    @EventHandler
+//    public void onEntityTarget(EntityTargetEvent event) {
+//        if (!(event.getTarget() instanceof Player target)) return;
+//        if (!plugin.getDataManager().hasEffect(target, this)) return;
+//        if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
+//
+//        event.setCancelled(true);
+//    }
 
-        event.setCancelled(true);
-    }
 }

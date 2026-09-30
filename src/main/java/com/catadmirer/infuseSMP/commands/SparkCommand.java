@@ -38,7 +38,7 @@ public class SparkCommand {
         }
 
         // Getting the name of the equipped effect.
-        InfuseEffect equippedEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
+        final InfuseEffect equippedEffect = plugin.getDataManager().getEffect(player.getUniqueId(), slot);
 
         // Handling if the slot is empty.
         if (equippedEffect == null) {

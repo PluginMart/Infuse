@@ -3,7 +3,7 @@ version: '$version'
 main: com.catadmirer.infuseSMP.Infuse
 api-version: '1.21.4'
 authors: [CatAdmirer, TurboJax, duff_mans_jnr]
-softdepend: [PlaceholderAPI, WorldGuard, BetterTeams]
+softdepend: [PlaceholderAPI, WorldGuard, BetterTeams, packetevents]
 contributors: [RealKai295, melut42]
 commands:
   infuse:

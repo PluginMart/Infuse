@@ -75,17 +75,16 @@ public class EffectCraftManager implements Listener {
 
         // Handling augmented effects
         if (effect.isAugmented()) {
+            event.setCancelled(true);
+
             // Preventing augmented effects from being crafted during rituals
-            if (plugin.getRitualManager().isActive()) {
-                event.setCancelled(true);
-                return;
-            }
+            if (plugin.getRitualManager().isActive()) return;
 
             // Starting the ritual
             plugin.getRitualManager().startRitual(player, effect, brewerLocation);
 
-            // Delaying giving the item to when the ritual ends
-            event.setCurrentItem(null);
+            // Removing the ingredients
+            event.getInventory().forEach(item -> item.subtract(1));
 
             // Closing the inventory
             player.closeInventory();

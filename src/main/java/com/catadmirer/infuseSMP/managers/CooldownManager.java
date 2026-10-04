@@ -1,8 +1,9 @@
 package com.catadmirer.infuseSMP.managers;
 
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import net.kyori.adventure.text.Component;
+import org.bukkit.Bukkit;
+
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CooldownManager {
@@ -19,7 +20,15 @@ public class CooldownManager {
     }
 
     public static boolean isEffectActive(UUID playerUUID, String key) {
-        return getEffectTimeLeft(playerUUID, key) > 0L;
+        final Map<String, Long> playerDurations = durations.get(playerUUID);
+        if (playerDurations != null) {
+            final String cooldown = playerDurations.keySet().stream().filter(name -> name.startsWith(key)).findFirst().orElse(null);
+            if (cooldown == null) return false;
+
+            return getEffectTimeLeft(playerUUID, cooldown) > 0L;
+        }
+
+        return false;
     }
 
     public static long getEffectTimeLeft(UUID playerUUID, String key) {
@@ -54,7 +63,15 @@ public class CooldownManager {
     }
 
     public static boolean isOnCooldown(UUID playerUUID, String key) {
-        return getCooldownTimeLeft(playerUUID, key) > 0L;
+        final Set<String> playerCooldowns = getCooldowns(playerUUID);
+        if (!playerCooldowns.isEmpty()) {
+            final String cooldown = playerCooldowns.stream().filter(name -> name.startsWith(key)).findFirst().orElse(null);
+            if (cooldown == null) return false;
+
+            return getCooldownTimeLeft(playerUUID, cooldown) > 0L;
+        }
+
+        return false;
     }
 
     public static void setCooldown(UUID playerUUID, String key, long seconds) {

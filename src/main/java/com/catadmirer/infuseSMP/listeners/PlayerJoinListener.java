@@ -6,6 +6,7 @@ import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.effects.InfuseEffect;
 
 import com.catadmirer.infuseSMP.managers.RecipeManager;
+import net.kyori.adventure.resource.ResourcePackRequest;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -62,5 +63,15 @@ public class PlayerJoinListener implements Listener {
 
         //noinspection DataFlowIssue
         event.getPlayer().showBossBar(plugin.getRitualManager().getBossBar());
+    }
+
+    @EventHandler
+    public void giveResourcePack(PlayerJoinEvent event) {
+        var request = ResourcePackRequest.resourcePackRequest()
+                .packs(Infuse.RESOURCE_PACK)
+                .required(true)
+                .build();
+
+        event.getPlayer().sendResourcePacks(request);
     }
 }

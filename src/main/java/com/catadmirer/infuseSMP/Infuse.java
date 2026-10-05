@@ -24,6 +24,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.util.UUID;
+import net.kyori.adventure.resource.ResourcePackInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -34,6 +36,9 @@ import org.slf4j.LoggerFactory;
 public class Infuse extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("Infuse");
     public static final NamespacedKey JOIN_EFFECT_KEY = new NamespacedKey("infuse", "has_join_effects");
+
+    // NOTE: Change the UUID with every pack update
+    public static final ResourcePackInfo RESOURCE_PACK = ResourcePackInfo.resourcePackInfo(UUID.fromString("7db10171-6baa-41d2-975c-0096db20379d"), URI.create("https://files.turbojax.org/packs/infuse/2.2/InfusePack-v2.2.zip"), "70bf54d44550f465dea514dac57f26707f0e6dcf");
 
     private static Infuse instance;
 

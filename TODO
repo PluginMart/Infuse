@@ -10,3 +10,9 @@ Update the resource pack to make the bow animation faster (maybe use cmd for spe
 Infuse Revamp Revamp
 - Armor has animations to show durability
 - hearts show icons above the player instead of numbers
+
+Add a config for apophis to not change your name/skin.
+Add a config to allow multiple rituals at once.
+Add a config to allow crafting normal effects during rituals.
+Apply the resource pack when a player joins
+Fix the version updater

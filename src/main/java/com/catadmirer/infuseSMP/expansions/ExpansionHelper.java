@@ -14,9 +14,4 @@ public class ExpansionHelper {
     public static boolean canUseWorldGuard() {
         return Bukkit.getPluginManager().isPluginEnabled("WorldGuard");
     }
-
-    public static boolean canUsePacketEvents() {
-        return Bukkit.getPluginManager().getPlugin("packetevents") != null;
-    }
-
 }

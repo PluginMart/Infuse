@@ -1,15 +1,13 @@
 package com.catadmirer.infuseSMP.effects;
 
 import com.catadmirer.infuseSMP.EffectConstants;
-import com.catadmirer.infuseSMP.Infuse;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.Message.MessageType;
 import com.catadmirer.infuseSMP.events.TenHitsGivenEvent;
-import com.catadmirer.infuseSMP.expansions.ExpansionHelper;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
-import com.catadmirer.infuseSMP.util.PacketEventsUtil;
-import net.kyori.adventure.text.Component;
+import io.papermc.paper.event.entity.EntityEquipmentChangedEvent;
+import io.papermc.paper.event.player.PlayerClientLoadedWorldEvent;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.*;
 import org.bukkit.Particle.DustOptions;
@@ -21,19 +19,18 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.entity.EntityTargetEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
-import org.bukkit.event.server.PluginDisableEvent;
-import org.bukkit.persistence.PersistentDataType;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class Invis extends InfuseEffect {
-
+    // Map that tracks every vanished player.
+    // The key is the vanished player, the value is the user who made them invisible.
+    private static final Map<UUID,UUID> vanished = new HashMap<>();
     public static final MiniMessage mm = MiniMessage.miniMessage();
-    private static final List<Player> vanished = new ArrayList<>();
 
     public Invis() {
         this(false);
@@ -73,29 +70,17 @@ public class Invis extends InfuseEffect {
         final double radius = 10;
         final long durationTicks = duration * 20;
         final World world = owner.getWorld();
-        final Set<Player> vanishedPlayers = new HashSet<>();
+
+        vanished.put(owner.getUniqueId(), owner.getUniqueId());
+        hidePlayer(owner);
 
         for (Entity entity : owner.getNearbyEntities(radius, radius, radius)) {
             if (!(entity instanceof final Player player)) continue;
             if (!plugin.getTrustManager().doesTrust(owner, player)) continue;
             if (plugin.getRegionBlocker().isEffectBlocked(player, this)) continue;
 
-            vanishedPlayers.add(player);
-            vanished.add(player);
-        }
-
-        vanishedPlayers.add(owner);
-
-        for (Player vanished : vanishedPlayers) {
-            if (plugin.getRegionBlocker().isEffectBlocked(vanished, this)) continue;
-
-//            for (Entity other : vanished.getNearbyEntities(radius, radius, radius)) {
-//                if (!(other instanceof final Player plr)) continue;
-//                if (!(plugin.getTrustManager().doesTrust(vanished, plr))) continue;
-//
-//            }
-
-            if (ExpansionHelper.canUsePacketEvents()) PacketEventsUtil.hideArmor(vanished);
+            vanished.put(player.getUniqueId(), owner.getUniqueId());
+            hidePlayer(player);
         }
 
         (new BukkitRunnable() {
@@ -105,11 +90,16 @@ public class Invis extends InfuseEffect {
                 if (this.ticksElapsed >= durationTicks) {
                     this.cancel();
 
-                    for (Player vanishedPlayer : vanishedPlayers) {
-                        vanished.remove(vanishedPlayer);
-                        if (ExpansionHelper.canUsePacketEvents()) PacketEventsUtil.showArmor(vanishedPlayer);
-                    }
+                    // Unhiding players who were hidden by the person who sparked
+                    vanished.entrySet().removeIf(e -> {
+                        if (!e.getValue().equals(owner.getUniqueId())) return false;
 
+                        Player player = Bukkit.getPlayer(e.getKey());
+                        if (player == null || !player.isOnline()) return true;
+
+                        showPlayer(player);
+                        return true;
+                    });
                 } else {
                     final Location center = owner.getLocation();
 
@@ -141,10 +131,6 @@ public class Invis extends InfuseEffect {
                 }
             }
         }).runTaskTimer(plugin, 0L, 10L);
-    }
-
-    public static List<Player> getVanishedPlayers() {
-        return vanished;
     }
 
     @Override
@@ -181,6 +167,26 @@ public class Invis extends InfuseEffect {
                 }
             }
         }).runTaskTimer(plugin, 0L, 5L);
+    }
+
+    public void hidePlayer(Player toHide) {
+        for (Player other : toHide.getWorld().getPlayers()) {
+            if (plugin.getTrustManager().doesTrust(toHide, other)) continue;
+
+            other.sendEquipmentChange(toHide, EquipmentSlot.HEAD, null);
+            other.sendEquipmentChange(toHide, EquipmentSlot.CHEST, null);
+            other.sendEquipmentChange(toHide, EquipmentSlot.LEGS, null);
+            other.sendEquipmentChange(toHide, EquipmentSlot.FEET, null);
+        }
+    }
+
+    public void showPlayer(Player toShow) {
+        for (Player other : toShow.getWorld().getPlayers()) {
+            other.sendEquipmentChange(toShow, EquipmentSlot.HEAD, toShow.getEquipment().getItem(EquipmentSlot.HEAD));
+            other.sendEquipmentChange(toShow, EquipmentSlot.CHEST, toShow.getEquipment().getItem(EquipmentSlot.CHEST));
+            other.sendEquipmentChange(toShow, EquipmentSlot.LEGS, toShow.getEquipment().getItem(EquipmentSlot.LEGS));
+            other.sendEquipmentChange(toShow, EquipmentSlot.FEET, toShow.getEquipment().getItem(EquipmentSlot.FEET));
+        }
     }
 
     //// Listeners ////
@@ -241,14 +247,39 @@ public class Invis extends InfuseEffect {
         this.spawnBlackParticles(target, 4);
     }
 
-    // TODO: Keep incase im wrong about invis people being able to be damaged
-//    @EventHandler
-//    public void onEntityTarget(EntityTargetEvent event) {
-//        if (!(event.getTarget() instanceof Player target)) return;
-//        if (!plugin.getDataManager().hasEffect(target, this)) return;
-//        if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
-//
-//        event.setCancelled(true);
-//    }
+    @EventHandler
+    public void onEntityTarget(EntityTargetEvent event) {
+        if (!(event.getTarget() instanceof Player target)) return;
+        if (!plugin.getDataManager().hasEffect(target, this)) return;
+        if (plugin.getRegionBlocker().isEffectBlocked(target, this)) return;
 
+        event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onJoin(PlayerClientLoadedWorldEvent event) {
+        Player player = event.getPlayer();
+
+        Bukkit.getScheduler().runTask(plugin, () -> {
+            vanished.keySet().forEach(id -> {
+                Player hidden = Bukkit.getPlayer(id);
+                if (hidden == null) return;
+
+                if (plugin.getTrustManager().doesTrust(hidden, player)) return;
+
+                player.sendEquipmentChange(hidden, EquipmentSlot.HEAD, null);
+                player.sendEquipmentChange(hidden, EquipmentSlot.CHEST, null);
+                player.sendEquipmentChange(hidden, EquipmentSlot.LEGS, null);
+                player.sendEquipmentChange(hidden, EquipmentSlot.FEET, null);
+            });
+        });
+    }
+
+    @EventHandler
+    public void onEquipmentChange(EntityEquipmentChangedEvent event) {
+        if (!(event.getEntity() instanceof Player player)) return;
+        if (!vanished.containsKey(player.getUniqueId())) return;
+
+        Bukkit.getScheduler().runTask(plugin, () -> hidePlayer(player));
+    }
 }

@@ -7,14 +7,12 @@ import com.catadmirer.infuseSMP.extraeffects.*;
 import com.catadmirer.infuseSMP.listeners.*;
 import com.catadmirer.infuseSMP.managers.*;
 import com.catadmirer.infuseSMP.expansions.InfusePlaceholders;
-import com.catadmirer.infuseSMP.util.PacketEventsUtil;
 import com.catadmirer.infuseSMP.util.regions.BasicRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.DualRegionBlocker;
 import com.catadmirer.infuseSMP.util.regions.RegionBlocker;
 import com.catadmirer.infuseSMP.util.trust.BetterTeamsTrustManager;
 import com.catadmirer.infuseSMP.util.trust.MultiTrustManager;
 import com.catadmirer.infuseSMP.util.trust.TrustManager;
-import com.github.retrooper.packetevents.PacketEvents;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -91,13 +89,6 @@ public class Infuse extends JavaPlugin {
         }
 
         regionBlocker.init();
-
-        if (ExpansionHelper.canUsePacketEvents()) {
-            PacketEventsUtil.onLoad(this);
-            LOGGER.info("PacketEvents found! Registering listeners.");
-        } else {
-            LOGGER.info("PacketEvents isn't installed! This may lead to certain effects working not properly.");
-        }
     }
 
     public void onEnable() {
@@ -129,9 +120,6 @@ public class Infuse extends JavaPlugin {
         } else {
             LOGGER.warn("PlaceholderAPI is not installed, so custom placeholders won't work.");
         }
-
-        // Registering the PacketEvents API & registering listener if the plugin is installed
-        if (ExpansionHelper.canUsePacketEvents()) PacketEventsUtil.init();
 
         // Logging the success message
         LOGGER.info("Infuse Plugin has been enabled!");
@@ -174,9 +162,6 @@ public class Infuse extends JavaPlugin {
 
         // Stopping existing rituals
         ritualManager.stopRitual();
-
-        // Unhooking from PacketEvents API if they have it installed
-        if (ExpansionHelper.canUsePacketEvents()) PacketEvents.getAPI().terminate();
 
         // Finalizing the message
         LOGGER.info("Infuse Plugin has been disabled!");

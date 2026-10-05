@@ -259,7 +259,7 @@ public class Infuse extends JavaPlugin {
             }
 
             JsonObject latestVersion = versions.get(0).getAsJsonObject();
-            Infuse.latestVersion = latestVersion.get("verson_number").getAsString();
+            Infuse.latestVersion = latestVersion.get("version_number").getAsString();
             return Infuse.latestVersion;
         } catch (JsonSyntaxException err) {
             LOGGER.error("Could not parse the json given by modrinth.", err);

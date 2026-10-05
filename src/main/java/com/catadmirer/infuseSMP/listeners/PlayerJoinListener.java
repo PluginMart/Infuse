@@ -73,4 +73,21 @@ public class PlayerJoinListener implements Listener {
 
         event.getPlayer().sendResourcePacks(request);
     }
+
+    @EventHandler
+    public void checkForUpdate(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+
+        // Not notifying operators
+        if (!player.hasPermission("infuse.update_notify")) return;
+
+        // Sending the update message (if needed)
+        if (!plugin.getVersion().equals(plugin.getLatestVersion())) {
+            Message msg = new Message(Message.MessageType.UPDATE_AVAILABLE);
+            msg.applyPlaceholder("current_version", plugin.getVersion());
+            msg.applyPlaceholder("latest_version", plugin.getLatestVersion());
+
+            player.sendMessage(msg.toComponent());
+        }
+    }
 }

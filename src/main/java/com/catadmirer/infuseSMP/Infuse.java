@@ -101,6 +101,15 @@ public class Infuse extends JavaPlugin {
         // Loading the message translator
         new MessageTranslator().loadAll();
 
+        // Sending the update message (if needed)
+        if (!getVersion().equals(getLatestVersion())) {
+            Message msg = new Message(Message.MessageType.UPDATE_AVAILABLE);
+            msg.applyPlaceholder("current_version", getVersion());
+            msg.applyPlaceholder("latest_version", getLatestVersion());
+
+            Bukkit.getConsoleSender().sendMessage(msg.toComponent());
+        }
+
         // Registering infuse commands
         this.registerCommands();
 
@@ -130,6 +139,8 @@ public class Infuse extends JavaPlugin {
         // Logging the success message
         LOGGER.info("Infuse Plugin has been enabled!");
     }
+
+
 
     public MainConfig getMainConfig() {
         return mainConfig;
@@ -216,7 +227,7 @@ public class Infuse extends JavaPlugin {
     }
 
     /** Checks the modrinth api for any updates to the plugin. */
-    private String getLatestVersion() {
+    public String getLatestVersion() {
         // Caching the latest version after saving it once
         if (latestVersion != null) {
             return latestVersion;

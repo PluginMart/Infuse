@@ -85,6 +85,7 @@ public class Message {
     }
 
     public enum MessageType {
+        UPDATE_AVAILABLE("current_version", "latest_version"),
         EFFECT_BROADCAST("player", "item", "x", "y", "z", "dimension"),
         DISCORD_BROADCAST("player", "item", "x", "y", "z", "dimension"),
         EFFECT_FINISHED("item"),

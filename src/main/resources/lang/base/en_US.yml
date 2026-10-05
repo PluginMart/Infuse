@@ -1,3 +1,7 @@
+# %current_version% = The current plugin version
+# %latest_version% = The latest plugin version
+update_available: "<gray>There is an update for Infuse!  Check"
+
 # %player% = Player sending
 # %item% = The item that's being sent
 # %x% = x Coords

@@ -34,6 +34,9 @@ commands:
     description: Draws a line between two coordinates
     usage: /draw <x1> <y1> <z1> <x2> <y2> <z2>
 permissions:
+  infuse.update_notify:
+    description: Makes a player receive a message when there is an update for Infuse
+    default: op
   infuse.commands.infuse.gui:
     description: Allows players to use `/infuse gui`
     default: op

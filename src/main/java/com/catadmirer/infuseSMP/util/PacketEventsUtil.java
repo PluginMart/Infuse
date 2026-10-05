@@ -24,8 +24,13 @@ import java.util.List;
 public class PacketEventsUtil extends PacketListenerAbstract {
 
     public static void onLoad(Infuse plugin) {
-        PacketEvents.setAPI(SpigotPacketEventsBuilder.build(plugin));
-        PacketEvents.getAPI().load();
+        var api = PacketEvents.getAPI();
+        if (api == null) {
+            api = SpigotPacketEventsBuilder.build(plugin);
+            api.load();
+        } else if (!api.isLoaded()) {
+            api.load();
+        }
     }
 
     public static void init() {

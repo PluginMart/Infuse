@@ -41,6 +41,8 @@ public interface TrustManager {
     }
 
     default boolean doesTrust(OfflinePlayer player, OfflinePlayer trusted) {
+        if (player.equals(trusted)) return true;
+
         return doesTrust(player.getUniqueId(), trusted.getUniqueId());
     }
 }

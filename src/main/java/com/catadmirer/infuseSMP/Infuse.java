@@ -41,6 +41,7 @@ public class Infuse extends JavaPlugin {
     public static final ResourcePackInfo RESOURCE_PACK = ResourcePackInfo.resourcePackInfo(UUID.fromString("7db10171-6baa-41d2-975c-0096db20379d"), URI.create("https://files.turbojax.org/packs/infuse/2.2/InfusePack-v2.2.zip"), "70bf54d44550f465dea514dac57f26707f0e6dcf");
 
     private static Infuse instance;
+    private static String latestVersion;
 
     private final DataManager dataManager;
     private final EffectManager effectManager;
@@ -216,6 +217,11 @@ public class Infuse extends JavaPlugin {
 
     /** Checks the modrinth api for any updates to the plugin. */
     private String getLatestVersion() {
+        // Caching the latest version after saving it once
+        if (latestVersion != null) {
+            return latestVersion;
+        }
+
         HttpRequest request = HttpRequest.newBuilder()
             .GET()
             .header("User-Agent", "Infuse/" + getVersion())
@@ -242,7 +248,8 @@ public class Infuse extends JavaPlugin {
             }
 
             JsonObject latestVersion = versions.get(0).getAsJsonObject();
-            return latestVersion.get("verson_number").getAsString();
+            Infuse.latestVersion = latestVersion.get("verson_number").getAsString();
+            return Infuse.latestVersion;
         } catch (JsonSyntaxException err) {
             LOGGER.error("Could not parse the json given by modrinth.", err);
         } catch (InterruptedException err) {

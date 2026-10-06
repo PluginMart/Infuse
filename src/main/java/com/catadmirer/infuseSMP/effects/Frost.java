@@ -58,16 +58,27 @@ public class Frost extends InfuseEffect {
     public void applyPassives(Player owner) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
-        if (!(owner.getVelocity().lengthSquared() < 0.01)) {
-            if (owner.isInPowderedSnow()) {
-                owner.setGliding(true);
-            }
+        final Location loc = owner.getLocation();
+        Bukkit.getAsyncScheduler().runNow(plugin, t -> {
+            while (true) {
+                if (loc.getBlockY() < 0) break;
 
-            Material blockType = owner.getLocation().subtract(0, 1, 0).getBlock().getType();
-            if (MaterialSetTag.ICE.isTagged(blockType)) {
-                owner.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 30, 2, false, false));
+                Material mat = loc.getBlock().getType();
+                if (!loc.getBlock().isSolid() && !mat.equals(Material.SNOW)) {
+                    loc.subtract(0, 1, 0);
+                    continue;
+                }
+
+                if (!MaterialSetTag.ICE.isTagged(mat) && !mat.equals(Material.SNOW) && !mat.equals(Material.SNOW_BLOCK)) break;
+
+                Bukkit.getScheduler().runTask(plugin, () -> owner.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 40, 2, false, false)));
+                break;
             }
-        }
+        });
+
+//        if (owner.isInPowderedSnow()) {
+//            owner.setGliding(true);
+//        }
     }
 
     @Override

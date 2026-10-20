@@ -18,12 +18,15 @@ public class PlayerSwapHandItemsListener implements Listener {
     @EventHandler
     public void onPlayerSwapHandItems(PlayerSwapHandItemsEvent event) {
         Player player = event.getPlayer();
+
         if (!plugin.getDataManager().getControlMode(player.getUniqueId()).equals("offhand")) return;
 
         if (!player.isSneaking()) {
-            player.performCommand("/lspark");
+            player.sendMessage("should activate lspark");
+            player.performCommand("lspark");
         } else {
-            player.performCommand("/rspark");
+            player.sendMessage("should activate rspark");
+            player.performCommand("rspark");
         }
     }
 }

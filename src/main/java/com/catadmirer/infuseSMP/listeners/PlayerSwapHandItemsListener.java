@@ -22,10 +22,8 @@ public class PlayerSwapHandItemsListener implements Listener {
         if (!plugin.getDataManager().getControlMode(player.getUniqueId()).equals("offhand")) return;
 
         if (!player.isSneaking()) {
-            player.sendMessage("should activate lspark");
             player.performCommand("lspark");
         } else {
-            player.sendMessage("should activate rspark");
             player.performCommand("rspark");
         }
     }

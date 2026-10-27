@@ -19,12 +19,18 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
+import java.util.Random;
 import java.util.UUID;
+import java.util.function.Function;
 import net.kyori.adventure.resource.ResourcePackInfo;
 import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
@@ -37,8 +43,8 @@ public class Infuse extends JavaPlugin {
     public static final Logger LOGGER = LoggerFactory.getLogger("Infuse");
     public static final NamespacedKey JOIN_EFFECT_KEY = new NamespacedKey("infuse", "has_join_effects");
 
-    // NOTE: Change the UUID with every pack update
-    public static final ResourcePackInfo RESOURCE_PACK = ResourcePackInfo.resourcePackInfo(UUID.fromString("c0fae53d-ae11-4485-8c71-7e87b68dfd58"), URI.create("https://files.turbojax.org/packs/infuse/2.3/InfusePack-v2.3.zip"), "70bf54d44550f465dea514dac57f26707f0e6dcf");
+    public static final Function<String,String> PACK_URL = version -> "https://files.turbojax.org/packs/infuse/%s/InfusePack-v%s.zip".formatted(version, version);
+    public static final ResourcePackInfo RESOURCE_PACK = packFromVersion("2.3");
 
     private static Infuse instance;
     private static String latestVersion;
@@ -57,6 +63,36 @@ public class Infuse extends JavaPlugin {
     public static Infuse getInstance() {
         assert instance != null;
         return instance;
+    }
+
+    private static ResourcePackInfo packFromVersion(String version) {
+        // Forming the url
+        String url = PACK_URL.apply(version);
+        URI uri = URI.create(url);
+
+        // Generating the uuid
+        Random rand = new Random(url.hashCode());
+        long mostSig = rand.nextLong();
+        long leastSig = rand.nextLong();
+        UUID id = new UUID(mostSig, leastSig);
+
+        // Getting the hash of the pack
+        String sha1;
+        try (InputStream remote = uri.toURL().openStream()) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-1");
+            byte[] buf = new byte[1024];
+
+            int bytesRead;
+            while ((bytesRead = remote.read(buf)) != -1) {
+                digest.update(buf, 0, bytesRead);
+            }
+
+            sha1 = HexFormat.of().formatHex(digest.digest());
+        } catch (IOException | NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
+
+        return ResourcePackInfo.resourcePackInfo(id, URI.create(url), sha1);
     }
 
     public Infuse() {

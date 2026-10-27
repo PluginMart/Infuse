@@ -72,7 +72,7 @@ permissions:
     default: true
   infuse.commands.draw:
     description: Allows players to use `/draw`
-    default: true
+    default: op
   infuse.commands.spark:
     description: Allows players to use `/lspark` and `/rspark`
     default: true

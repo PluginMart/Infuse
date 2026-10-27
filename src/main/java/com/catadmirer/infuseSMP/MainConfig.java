@@ -242,6 +242,8 @@ public class MainConfig {
         if (!config.contains("thunder.thunder_damage")) config.set("thunder.thunder_damage", 2);
         if (!config.contains("thunder.passive.chain_lightning_radius")) config.set("thunder.passive.chain_lightning_radius", 3);
 
+        if (!config.contains("speed.spark.speed_cap")) config.set("speed.spark.speed_cap", 5);
+
         saveSilently();
     }
 
@@ -558,6 +560,10 @@ public class MainConfig {
 
     public int speedPlayerVelocityMultiplier() {
         return config.getInt("speed.spark.player_velocity_multiplier", 2);
+    }
+
+    public int maxSpeedCap() {
+        return config.getInt("speed.spark.speed_cap", 5);
     }
 
     //

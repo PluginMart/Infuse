@@ -38,7 +38,7 @@ public class Infuse extends JavaPlugin {
     public static final NamespacedKey JOIN_EFFECT_KEY = new NamespacedKey("infuse", "has_join_effects");
 
     // NOTE: Change the UUID with every pack update
-    public static final ResourcePackInfo RESOURCE_PACK = ResourcePackInfo.resourcePackInfo(UUID.fromString("7db10171-6baa-41d2-975c-0096db20379d"), URI.create("https://files.turbojax.org/packs/infuse/2.2/InfusePack-v2.2.zip"), "70bf54d44550f465dea514dac57f26707f0e6dcf");
+    public static final ResourcePackInfo RESOURCE_PACK = ResourcePackInfo.resourcePackInfo(UUID.fromString("c0fae53d-ae11-4485-8c71-7e87b68dfd58"), URI.create("https://files.turbojax.org/packs/infuse/2.3/InfusePack-v2.3.zip"), "70bf54d44550f465dea514dac57f26707f0e6dcf");
 
     private static Infuse instance;
     private static String latestVersion;
@@ -139,8 +139,6 @@ public class Infuse extends JavaPlugin {
         // Logging the success message
         LOGGER.info("Infuse Plugin has been enabled!");
     }
-
-
 
     public MainConfig getMainConfig() {
         return mainConfig;

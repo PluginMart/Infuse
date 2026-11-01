@@ -26,5 +26,7 @@ public class PlayerSwapHandItemsListener implements Listener {
         } else {
             player.performCommand("rspark");
         }
+
+        event.setCancelled(true);
     }
 }

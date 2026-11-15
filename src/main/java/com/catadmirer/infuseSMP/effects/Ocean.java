@@ -4,6 +4,7 @@ import com.catadmirer.infuseSMP.EffectConstants;
 import com.catadmirer.infuseSMP.Message;
 import com.catadmirer.infuseSMP.managers.CooldownManager;
 
+import net.kyori.adventure.text.Component;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffect;
@@ -70,7 +71,7 @@ public class Ocean extends InfuseEffect {
 
             Bukkit.getScheduler().runTask(plugin, () -> {
                 for (Player otherPlayer : owner.getWorld().getPlayers()) {
-                    if (otherPlayer.equals(owner)) continue;
+                    if (otherPlayer.equals(owner) || plugin.getTrustManager().doesTrust(owner, otherPlayer)) continue;
                     if (plugin.getRegionBlocker().isEffectBlocked(otherPlayer, this)) continue;
                     if (otherPlayer.getLocation().distance(owner.getLocation()) > drownRadius) continue;
 

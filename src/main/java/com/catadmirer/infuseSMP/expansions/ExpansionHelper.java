@@ -12,6 +12,6 @@ public class ExpansionHelper {
     }
 
     public static boolean canUseWorldGuard() {
-        return Bukkit.getPluginManager().isPluginEnabled("WorldGuard");
+        return Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
     }
 }

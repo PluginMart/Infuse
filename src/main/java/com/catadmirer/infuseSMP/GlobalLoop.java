@@ -76,22 +76,6 @@ public class GlobalLoop extends BukkitRunnable {
 
                 if (!isBlocked) rEffect.applyPassives(player);
             }
-
-            // Making sure the apophis boost has been removed
-            Apophis apophis = (Apophis) InfuseEffect.getEffect(EffectConstants.Keys.APOPHIS);
-            if (apophis != null && !plugin.getDataManager().hasEffect(player, apophis)) {
-                AttributeInstance playerHealth = player.getAttribute(Attribute.MAX_HEALTH);
-                assert playerHealth != null;
-                playerHealth.removeModifier(Apophis.APOPHIS_BOOST);
-            }
-
-            // Making sure the heart boost has been removed
-            Heart heart = (Heart) InfuseEffect.getEffect(EffectConstants.Keys.HEART);
-            if (heart != null && !plugin.getDataManager().hasEffect(player, heart)) {
-                AttributeInstance playerHealth = player.getAttribute(Attribute.MAX_HEALTH);
-                assert playerHealth != null;
-                playerHealth.removeModifier(Heart.heartBoost);
-            }
         }
     }
 }

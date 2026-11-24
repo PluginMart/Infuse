@@ -41,13 +41,13 @@ public class Invis extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
         owner.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, -1, 0, false, false));
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         owner.removePotionEffect(PotionEffectType.INVISIBILITY);
     }
 

@@ -41,7 +41,7 @@ public class Heart extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
@@ -51,7 +51,7 @@ public class Heart extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
         attribute.removeModifier(heartBoost);
         attribute.removeModifier(heartSparkBoost);

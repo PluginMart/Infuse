@@ -29,7 +29,7 @@ public class Ocean extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
         
         owner.addPotionEffect(new PotionEffect(PotionEffectType.WATER_BREATHING, -1, 0, false, false));
@@ -37,13 +37,13 @@ public class Ocean extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         owner.removePotionEffect(PotionEffectType.WATER_BREATHING);
         owner.removePotionEffect(PotionEffectType.DOLPHINS_GRACE);
     }
 
     @Override
-    public void applyPassives(Player owner) {
+    public void applyPassives(Player owner, String slot) {
         // Checking if the owner of the effect already has the task
         if (oceanTasks.contains(owner.getUniqueId())) return;
         oceanTasks.add(owner.getUniqueId());

@@ -63,7 +63,7 @@ public class Emerald extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
         // Applying the potion effect to the player
         owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, -1, 0));
@@ -73,7 +73,7 @@ public class Emerald extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         // Removing the potion effect
         owner.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
 

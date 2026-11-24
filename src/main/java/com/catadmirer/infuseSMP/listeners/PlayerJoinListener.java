@@ -50,10 +50,10 @@ public class PlayerJoinListener implements Listener {
 
         // Enabling each effect
         InfuseEffect effect = plugin.getDataManager().getEffect(player.getUniqueId(), "1");
-        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player);
+        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player, "1");
 
         effect = plugin.getDataManager().getEffect(player.getUniqueId(), "2");
-        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player);
+        if (effect != null && !plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player, "2");
     }
 
     @EventHandler

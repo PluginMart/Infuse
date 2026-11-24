@@ -41,7 +41,7 @@ public class Thief extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -50,7 +50,7 @@ public class Thief extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         if (disguisedPlayers.containsKey(owner.getUniqueId())) {
             removeDisguise(owner);
         }

@@ -38,13 +38,13 @@ public class Haste extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {}
+    public void equip(Player owner, String slot) {}
 
     @Override
-    public void unequip(Player owner) {}
+    public void unequip(Player owner, String slot) {}
 
     @Override
-    public void applyPassives(Player owner) {
+    public void applyPassives(Player owner, String slot) {
         //todo: Move to PlayerItemHeldEvent listener
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 

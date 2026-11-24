@@ -44,12 +44,12 @@ public class Ender extends InfuseEffect {
         super("ender", EffectConstants.Id.ENDER, augmented, EffectConstants.PotionColor.ENDER, EffectConstants.RitualColor.ENDER, EffectConstants.BackgroundColor.ENDER);
     }
 
-    public void equip(Player owner) {}
+    public void equip(Player owner, String slot) {}
 
-    public void unequip(Player owner) {}
+    public void unequip(Player owner, String slot) {}
 
     @Deprecated()
-    public void applyPassives(Player owner) {
+    public void applyPassives(Player owner, String slot) {
         final double radius = plugin.getMainConfig().enderPassiveRadius();
 
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;

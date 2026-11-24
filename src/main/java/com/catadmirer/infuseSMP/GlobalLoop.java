@@ -48,16 +48,16 @@ public class GlobalLoop extends BukkitRunnable {
                 boolean isBlocked = lEffectDisabled.contains(player.getUniqueId());
 
                 if (shouldBlock && !isBlocked) {
-                    lEffect.unequip(player);
+                    lEffect.unequip(player, "1");
                     lEffectDisabled.add(player.getUniqueId());
                     isBlocked = true;
                 } else if (!shouldBlock && isBlocked) {
-                    lEffect.equip(player);
+                    lEffect.equip(player, "1");
                     lEffectDisabled.remove(player.getUniqueId());
                     isBlocked = false;
                 }
 
-                if (!isBlocked) lEffect.applyPassives(player);
+                if (!isBlocked) lEffect.applyPassives(player, "1");
             }
 
             // Applying passive effects to the player
@@ -65,16 +65,16 @@ public class GlobalLoop extends BukkitRunnable {
                 final boolean shouldBlock = plugin.getRegionBlocker().isEffectBlocked(player, rEffect);
                 boolean isBlocked = rEffectDisabled.contains(player.getUniqueId());
                 if (shouldBlock && !isBlocked) {
-                    rEffect.unequip(player);
+                    rEffect.unequip(player, "2");
                     rEffectDisabled.add(player.getUniqueId());
                     isBlocked = true;
                 } else if (!shouldBlock && isBlocked) {
-                    rEffect.equip(player);
+                    rEffect.equip(player, "2");
                     rEffectDisabled.remove(player.getUniqueId());
                     isBlocked = false;
                 }
 
-                if (!isBlocked) rEffect.applyPassives(player);
+                if (!isBlocked) rEffect.applyPassives(player, "2");
             }
         }
     }

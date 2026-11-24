@@ -37,10 +37,10 @@ public class Thunder extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {}
+    public void equip(Player owner, String slot) {}
 
     @Override
-    public void unequip(Player owner) {}
+    public void unequip(Player owner, String slot) {}
 
     @Override
     public void activateSpark(Player owner, String slot) {

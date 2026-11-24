@@ -36,7 +36,7 @@ public class Speed extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         speedLevels.put(owner.getUniqueId(), 0);
@@ -44,14 +44,14 @@ public class Speed extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         speedLevels.remove(owner.getUniqueId());
 
         owner.removePotionEffect(PotionEffectType.SPEED);
     }
 
     @Override
-    public void applyPassives(Player owner) {
+    public void applyPassives(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         UUID uuid = owner.getUniqueId();

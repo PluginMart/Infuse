@@ -166,12 +166,12 @@ public abstract class InfuseEffect implements Listener, Keyed {
         return (augmented ? "aug_" : "") + plainKey;
     }
 
-    public abstract void equip(Player owner);
-    public abstract void unequip(Player owner);
+    public abstract void equip(Player owner, String slot);
+    public abstract void unequip(Player owner, String slot);
 
     @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated()
-    public void applyPassives(Player owner) {}
+    public void applyPassives(Player owner, String slot) {}
     public abstract void activateSpark(Player owner, String slot);
 
     public abstract InfuseEffect getRegularVersion();

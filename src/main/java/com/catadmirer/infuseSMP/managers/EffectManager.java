@@ -75,7 +75,7 @@ public class EffectManager {
 
         // Equipping the effect and updating the player data
         // If the player is in a blocked location, the effect is equipped but not activated.
-        if (!plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player);
+        if (!plugin.getRegionBlocker().isEffectBlocked(player, effect)) effect.equip(player, slot);
         plugin.getDataManager().setEffect(player.getUniqueId(), slot, effect);
 
         return new EquipResult(EquipResultType.SUCCESS, effect);
@@ -105,7 +105,7 @@ public class EffectManager {
         if (effect == null) return;
 
         // Removing the effect
-        effect.unequip(player);
+        effect.unequip(player, slot);
         plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
     }
 
@@ -213,7 +213,7 @@ public class EffectManager {
         if (!event.callEvent()) return new EquipResult(EquipResultType.CANCELLED, effect);
 
         // Unequipping the effect and updating the player data
-        effect.unequip(player);
+        effect.unequip(player, slot);
         plugin.getDataManager().removeEffect(player.getUniqueId(), slot);
 
         return new EquipResult(EquipResultType.SUCCESS, effect);

@@ -46,16 +46,16 @@ public class Frost extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
         changeToSnow(owner);
     }
 
     @Override
-    public void unequip(Player owner) {}
+    public void unequip(Player owner, String slot) {}
 
     @Override
-    public void applyPassives(Player owner) {
+    public void applyPassives(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         final Location loc = owner.getLocation();

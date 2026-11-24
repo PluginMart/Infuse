@@ -94,7 +94,7 @@ public class Apophis extends InfuseEffect {
     }
 
     @Override
-    public void equip(Player owner) {
+    public void equip(Player owner, String slot) {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         // Applying the potion effect to the player
@@ -114,7 +114,7 @@ public class Apophis extends InfuseEffect {
     }
 
     @Override
-    public void unequip(Player owner) {
+    public void unequip(Player owner, String slot) {
         // Removing the potion effects
         owner.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
         owner.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);

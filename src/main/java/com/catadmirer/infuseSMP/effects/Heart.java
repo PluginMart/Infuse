@@ -26,11 +26,12 @@ import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.UUID;
+import java.util.function.Function;
 
 public class Heart extends InfuseEffect {
 
-    public static final NamespacedKey heartBoost = new NamespacedKey("infuse", "heart_boost");
-    public static final NamespacedKey heartSparkBoost = new NamespacedKey("infuse", "heart_spark_boost");
+    public static final Function<String,NamespacedKey> HEART_BOOST = suffix -> new NamespacedKey("infuse", "heart_boost_" + suffix);
+    public static final Function<String,NamespacedKey> HEART_SPARK_BOOST = suffix -> new NamespacedKey("infuse", "heart_spark_boost_" + suffix);
 
     public Heart() {
         this(false);
@@ -45,16 +46,17 @@ public class Heart extends InfuseEffect {
         if (plugin.getRegionBlocker().isEffectBlocked(owner, this)) return;
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(heartBoost, 10, Operation.ADD_NUMBER));
-
-        owner.heal(10);
+        if (attribute.getModifier(HEART_BOOST.apply(slot)) == null) {
+            attribute.addModifier(new AttributeModifier(HEART_BOOST.apply(slot), 10, Operation.ADD_NUMBER));
+            owner.heal(10);
+        }
     }
 
     @Override
     public void unequip(Player owner, String slot) {
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.removeModifier(heartBoost);
-        attribute.removeModifier(heartSparkBoost);
+        attribute.removeModifier(HEART_BOOST.apply(slot));
+        attribute.removeModifier(HEART_SPARK_BOOST.apply(slot));
     }
 
     @Override
@@ -68,7 +70,9 @@ public class Heart extends InfuseEffect {
         owner.playSound(owner.getLocation(), Sound.BLOCK_BEACON_POWER_SELECT, 1, 1);
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(heartSparkBoost, 10, Operation.ADD_NUMBER));
+        if (attribute.getModifier(HEART_SPARK_BOOST.apply(slot)) == null) {
+            attribute.addModifier(new AttributeModifier(HEART_SPARK_BOOST.apply(slot), 10, Operation.ADD_NUMBER));
+        }
         owner.heal(attribute.getValue());
 
         // Applying cooldowns and durations for the effect
@@ -77,7 +81,7 @@ public class Heart extends InfuseEffect {
 
         CooldownManager.setTimes(playerUUID, plainKey + "_" + slot, duration, cooldown);
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> attribute.removeModifier(heartSparkBoost), duration * 20);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> attribute.removeModifier(HEART_SPARK_BOOST.apply(slot)), duration * 20);
     }
 
     @Override

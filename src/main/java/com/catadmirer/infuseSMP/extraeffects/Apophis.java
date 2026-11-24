@@ -70,11 +70,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.UUID;
+import java.util.function.Function;
 
 public class Apophis extends InfuseEffect {
     public static final NamespacedKey LOOTING_KEY = new NamespacedKey("infuse", "apophis_looting");
-    public static final NamespacedKey APOPHIS_BOOST = new NamespacedKey("infuse", "apophis_boost");
-    public static final NamespacedKey APOPHIS_SPARK_BOOST = new NamespacedKey("infuse", "apophis_spark_boost");
+    public static final Function<String,NamespacedKey> APOPHIS_BOOST = suffix -> new NamespacedKey("infuse", "apophis_boost_" + suffix);
+    public static final Function<String,NamespacedKey> APOPHIS_SPARK_BOOST = suffix -> new NamespacedKey("infuse", "apophis_spark_boost_" + suffix);
 
     private static final MiniMessage mm = MiniMessage.miniMessage();
     private static final Component APOPHIS_NAME = Component.text("Apophis", NamedTextColor.DARK_PURPLE);
@@ -106,8 +107,10 @@ public class Apophis extends InfuseEffect {
         }
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(APOPHIS_BOOST, 10, Operation.ADD_NUMBER));
-        owner.heal(10);
+        if (attribute.getModifier(APOPHIS_BOOST.apply(slot)) == null) {
+            attribute.addModifier(new AttributeModifier(APOPHIS_BOOST.apply(slot), 10, Operation.ADD_NUMBER));
+            owner.heal(10);
+        }
 
         // Disguise player
         disguise(owner);
@@ -116,6 +119,7 @@ public class Apophis extends InfuseEffect {
     @Override
     public void unequip(Player owner, String slot) {
         // Removing the potion effects
+        // TODO: handle when the player has effects from other sources?
         owner.removePotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE);
         owner.removePotionEffect(PotionEffectType.FIRE_RESISTANCE);
         
@@ -127,8 +131,8 @@ public class Apophis extends InfuseEffect {
         }
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.removeModifier(APOPHIS_BOOST);
-        attribute.removeModifier(APOPHIS_SPARK_BOOST);
+        attribute.removeModifier(APOPHIS_BOOST.apply(slot));
+        attribute.removeModifier(APOPHIS_SPARK_BOOST.apply(slot));
 
         // Removing the player's disguise
         removeDisguise(owner);
@@ -154,10 +158,12 @@ public class Apophis extends InfuseEffect {
         owner.addPotionEffect(new PotionEffect(PotionEffectType.HERO_OF_THE_VILLAGE, (int) duration * 20, 4));
 
         AttributeInstance attribute = owner.getAttribute(Attribute.MAX_HEALTH);
-        attribute.addModifier(new AttributeModifier(APOPHIS_SPARK_BOOST, 10, Operation.ADD_NUMBER));
+        if (attribute.getModifier(APOPHIS_SPARK_BOOST.apply(slot)) == null) {
+            attribute.addModifier(new AttributeModifier(APOPHIS_SPARK_BOOST.apply(slot), 10, Operation.ADD_NUMBER));
+        }
         owner.heal(10);
 
-        Bukkit.getScheduler().runTaskLater(plugin, () -> attribute.removeModifier(APOPHIS_SPARK_BOOST), duration * 20);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> attribute.removeModifier(APOPHIS_SPARK_BOOST.apply(slot)), duration * 20);
 
         final double radius = plugin.getMainConfig().apophisSparkRadius();
         for (Entity entity : owner.getNearbyEntities(radius, radius, radius)) {
